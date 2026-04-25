@@ -7,6 +7,8 @@ import { fileURLToPath } from "url";
 import mongoose from "mongoose"; // <-- ĐÃ THÊM: Import Mongoose
 
 import { ensureStore, getAll, upsertExternalEvents, addReport } from "./store.js";
+import disasterRoutes from "./routes/disasterRoutes.js";
+import { initCrawler } from "./services/crawler.js";
 
 dotenv.config();
 
@@ -52,6 +54,9 @@ const server = http.createServer(app);
 const io = new SocketIOServer(server, {
     cors: { origin: "*" },
 });
+
+// Initialize crawler with Socket.io
+initCrawler(io);
 
 function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
 function isFiniteNumber(x) { return typeof x === "number" && Number.isFinite(x); }
@@ -105,6 +110,8 @@ app.post('/api/alerts', async (req, res) => {
         res.status(500).json({ error: 'Lỗi lưu dữ liệu' });
     }
 });
+
+app.use('/api/disaster-events', disasterRoutes);
 
 // ==========================================
 // CÁC API VÀ LOGIC CŨ (GIỮ NGUYÊN)
