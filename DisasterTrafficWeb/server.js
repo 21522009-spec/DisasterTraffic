@@ -7,6 +7,8 @@ import { fileURLToPath } from "url";
 import mongoose from "mongoose"; // <-- ĐÃ THÊM: Import Mongoose
 
 import { ensureStore, getAll, upsertExternalEvents, addReport } from "./store.js";
+import disasterRoutes from "./routes/disasterRoutes.js";
+import { initCrawler } from "./services/crawler.js";
 
 dotenv.config();
 
@@ -22,17 +24,7 @@ if (MONGO_URI) {
     console.log('⚠️ Cảnh báo: Chưa có MONGO_URI trong file .env');
 }
 
-// Tạo "Khuôn mẫu" (Schema) cho dữ liệu Cảnh báo thiên tai/hỏa hoạn
-const alertSchema = new mongoose.Schema({
-    type: String,     // 'fire' (cháy) hoặc 'flood' (ngập)
-    address: String,  // Tên khu vực (VD: Quận 1)
-    lng: Number,      // Kinh độ
-    lat: Number,      // Vĩ độ
-    createdAt: { type: Date, default: Date.now }
-});
-
-// Tạo Model từ Schema
-const Alert = mongoose.model('Alert', alertSchema);
+// Khuôn mẫu (Schema) cho dữ liệu Cảnh báo thiên tai/hỏa hoạn hiện được định nghĩa và lấy từ mongoose.models trong các controller/service
 // ==========================================
 
 
@@ -55,6 +47,12 @@ const io = new SocketIOServer(server, {
 
 function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
 function isFiniteNumber(x) { return typeof x === "number" && Number.isFinite(x); }
+
+// Sử dụng router mới
+app.use('/api/disasters', disasterRoutes);
+
+// Khởi tạo Crawler
+initCrawler(io);
 
 function normalizeBboxQuery(q) {
     // bbox=minLon,minLat,maxLon,maxLat
