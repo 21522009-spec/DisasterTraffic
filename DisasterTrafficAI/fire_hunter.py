@@ -1,6 +1,7 @@
 ﻿import cv2
 import requests
 import time
+import threading
 from googleapiclient.discovery import build
 from ultralytics import YOLO
 from vidgear.gears import CamGear
@@ -90,19 +91,23 @@ def verify_fire_with_ai(video_id, title):
 # HÀM 3: GỬI CẢNH BÁO LÊN APP
 # ==========================================
 def send_alert_to_app(title, video_url):
-    print("🚨 XÁC NHẬN CÓ CHÁY! Đang bắn thông báo lên App...")
-    data = {
-        "type": "fire",
-        "address": f"Phát hiện từ mạng xã hội: {title}",
-        "lat": 10.8700, # Tọa độ giả định (ví dụ khu vực ĐHQG/UIT)
-        "lng": 106.8031,
-        "sourceLink": video_url # Gửi kèm link để người dùng bấm vào xem
-    }
-    try:
-        requests.post(NGROK_API_URL, json=data)
-        print("✅ Đã cập nhật bản đồ thành công!")
-    except Exception as e:
-        print(f"❌ Lỗi kết nối Node.js: {e}")
+    def post_request():
+        print("🚨 XÁC NHẬN CÓ CHÁY! Đang bắn thông báo lên App...")
+        data = {
+            "type": "fire",
+            "address": f"Phát hiện từ mạng xã hội: {title}",
+            "lat": 10.8700, # Tọa độ giả định (ví dụ khu vực ĐHQG/UIT)
+            "lng": 106.8031,
+            "sourceLink": video_url # Gửi kèm link để người dùng bấm vào xem
+        }
+        try:
+            requests.post(NGROK_API_URL, json=data)
+            print("✅ Đã cập nhật bản đồ thành công!")
+        except Exception as e:
+            print(f"❌ Lỗi kết nối Node.js: {e}")
+
+    thread = threading.Thread(target=post_request)
+    thread.start()
 
 # ==========================================
 # VÒNG LẶP CHÍNH (CHẠY 24/7)
