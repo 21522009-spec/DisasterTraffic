@@ -1,15 +1,4 @@
-﻿import mongoose from 'mongoose';
-
-// Alert Model (Avoid OverwriteModelError)
-const alertSchema = new mongoose.Schema({
-    type: String,
-    address: String,
-    lng: Number,
-    lat: Number,
-    createdAt: { type: Date, default: Date.now }
-});
-
-const Alert = mongoose.models.Alert || mongoose.model('Alert', alertSchema);
+﻿import Alert from '../models/Alert.js';
 
 export const getDisasters = async (req, res) => {
     try {
