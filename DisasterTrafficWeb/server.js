@@ -90,7 +90,37 @@ app.get('/api/alerts', async (req, res) => {
 // API: Nhận cảnh báo mới (từ AI hoặc test) và lưu vào MongoDB
 app.post('/api/alerts', async (req, res) => {
     try {
+        if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)) {
+            return res.status(400).json({ error: 'Invalid payload format' });
+        }
+
+        const allowedKeys = ['type', 'address', 'lng', 'lat'];
+        const bodyKeys = Object.keys(req.body);
+
+        // Check for extraneous fields
+        if (bodyKeys.some(key => !allowedKeys.includes(key))) {
+            return res.status(400).json({ error: 'Extraneous fields are not allowed' });
+        }
+
         const { type, address, lng, lat } = req.body;
+
+        // Validate type
+        if (!['fire', 'flood', 'traffic_jam'].includes(type)) {
+            return res.status(400).json({ error: "Invalid type. Must be 'fire', 'flood', or 'traffic_jam'." });
+        }
+
+        // Validate address
+        if (typeof address !== 'string' || address.length > 255) {
+            return res.status(400).json({ error: 'Invalid address. Must be a string with maximum length of 255.' });
+        }
+
+        // Validate coordinates (fail-fast, no clamping)
+        if (!isFiniteNumber(lat) || lat < -90 || lat > 90) {
+            return res.status(400).json({ error: 'Invalid latitude. Must be a finite number between -90 and 90.' });
+        }
+        if (!isFiniteNumber(lng) || lng < -180 || lng > 180) {
+            return res.status(400).json({ error: 'Invalid longitude. Must be a finite number between -180 and 180.' });
+        }
 
         // Lưu thẳng vào Database
         const newAlert = new Alert({ type, address, lng, lat });
