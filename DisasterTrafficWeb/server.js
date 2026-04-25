@@ -7,8 +7,9 @@ import { fileURLToPath } from "url";
 import mongoose from "mongoose"; // <-- ĐÃ THÊM: Import Mongoose
 
 import { ensureStore, getAll, upsertExternalEvents, addReport } from "./store.js";
-mport disasterRoutes from "./routes/disasterRoutes.js";
+import disasterRoutes from "./routes/disasterRoutes.js";
 import { initCrawler } from "./services/crawler.js";
+import Alert from "./models/Alert.js";
 
 dotenv.config();
 
@@ -24,7 +25,6 @@ if (MONGO_URI) {
     console.log('⚠️ Cảnh báo: Chưa có MONGO_URI trong file .env');
 }
 
-// Khuôn mẫu (Schema) cho dữ liệu Cảnh báo thiên tai/hỏa hoạn hiện được định nghĩa và lấy từ mongoose.models trong các controller/service
 // ==========================================
 
 
@@ -89,11 +89,54 @@ app.get('/api/alerts', async (req, res) => {
 });
 
 // API: Nhận cảnh báo mới (từ AI hoặc test) và lưu vào MongoDB
-app.post('/api/alerts', async (req, res) => {
-    try {
-        const { type, address, lng, lat } = req.body;
+// Middleware kiểm tra API Key để chống Data Poisoning
+const requireApiKey = (req, res, next) => {
+    const apiKey = req.headers['x-api-key'];
+    const validKey = process.env.AI_WEBHOOK_SECRET;
 
-        // Lưu thẳng vào Database
+    if (!validKey) {
+        console.warn('⚠️ Server không cấu hình AI_WEBHOOK_SECRET, từ chối request!');
+        return res.status(500).json({ error: 'Server configuration error' });
+    }
+
+    if (apiKey !== validKey) {
+        return res.status(401).json({ error: 'Unauthorized: Invalid API Key' });
+    }
+    next();
+};
+
+app.post('/api/alerts', requireApiKey, async (req, res) => {
+    try {
+        const payload = req.body;
+
+        // Fail-Fast: Reject unknown fields to prevent Mass Assignment
+        const allowedFields = ['type', 'address', 'lng', 'lat'];
+        const payloadKeys = Object.keys(payload);
+        for (const key of payloadKeys) {
+            if (!allowedFields.includes(key)) {
+                return res.status(400).json({ error: `Bad Request: Extraneous field '${key}' not allowed.` });
+            }
+        }
+
+        const { type, address, lng, lat } = payload;
+
+        // Validation limits explicitly
+        if (!type || !address || lng == null || lat == null) {
+            return res.status(400).json({ error: 'Bad Request: Missing required fields' });
+        }
+        if (!isFiniteNumber(lng) || lng < -180 || lng > 180) {
+            return res.status(400).json({ error: 'Bad Request: Invalid longitude' });
+        }
+        if (!isFiniteNumber(lat) || lat < -90 || lat > 90) {
+            return res.status(400).json({ error: 'Bad Request: Invalid latitude' });
+        }
+
+        const validTypes = ['fire', 'flood', 'traffic', 'earthquake'];
+        if (!validTypes.includes(type)) {
+            return res.status(400).json({ error: `Bad Request: Invalid type '${type}'` });
+        }
+
+        // Lưu thẳng vào Database (đã validate qua schema và Fail-Fast ở trên)
         const newAlert = new Alert({ type, address, lng, lat });
         await newAlert.save();
 
@@ -103,6 +146,9 @@ app.post('/api/alerts', async (req, res) => {
         res.status(201).json({ message: 'Đã lưu cảnh báo thành công', data: newAlert });
     } catch (error) {
         console.error("Lỗi lưu dữ liệu vào MongoDB:", error);
+        if (error.name === 'ValidationError') {
+            return res.status(400).json({ error: 'Bad Request: Validation Error', details: error.message });
+        }
         res.status(500).json({ error: 'Lỗi lưu dữ liệu' });
     }
 });

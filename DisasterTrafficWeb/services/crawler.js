@@ -1,18 +1,6 @@
 ﻿import cron from 'node-cron';
 import axios from 'axios';
-import mongoose from 'mongoose';
-
-// Alert Model (reuse from server.js if possible, but better to redefine or import. Assuming Alert model is registered in server.js or we can define it again)
-const alertSchema = new mongoose.Schema({
-    type: String,
-    address: String,
-    lng: Number,
-    lat: Number,
-    createdAt: { type: Date, default: Date.now }
-});
-
-// Avoid OverwriteModelError
-const Alert = mongoose.models.Alert || mongoose.model('Alert', alertSchema);
+import Alert from '../models/Alert.js';
 
 export const initCrawler = (io) => {
     // Chạy mỗi 30 phút
