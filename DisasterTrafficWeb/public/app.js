@@ -204,7 +204,7 @@ map.on("load", async () => {
     const title = p.title || p.type || kind;
 
     const desc = p.description ? `<div style="margin-top:6px">${escapeHtml(p.description)}</div>` : "";
-    const link = p.url ? `<div style="margin-top:6px"><a href="${p.url}" target="_blank" rel="noreferrer">Open source</a></div>` : "";
+    const link = p.url ? `<div style="margin-top:6px"><a href="${escapeHtml(p.url)}" target="_blank" rel="noreferrer">Open source</a></div>` : "";
 
     popup
       .setLngLat(e.lngLat)

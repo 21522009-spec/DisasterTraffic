@@ -122,14 +122,17 @@
             const list = document.getElementById('alert-list');
             const li = document.createElement('li');
 
+            const strong = document.createElement('strong');
             if (type === 'fire') {
                 li.className = "p-3 bg-red-50 border-l-4 border-red-500 rounded text-red-700 shadow-sm transition-all";
-                li.innerHTML = `<strong>🔥 Cháy:</strong> ${locationName}`;
+                strong.textContent = "🔥 Cháy: ";
             } else {
                 li.className = "p-3 bg-blue-50 border-l-4 border-blue-500 rounded text-blue-700 shadow-sm transition-all";
-                li.innerHTML = `<strong>🌊 Ngập:</strong> ${locationName}`;
+                strong.textContent = "🌊 Ngập: ";
             }
 
+            li.appendChild(strong);
+            li.appendChild(document.createTextNode(locationName));
             // Đẩy thông báo lên đầu danh sách
             list.prepend(li);
         }

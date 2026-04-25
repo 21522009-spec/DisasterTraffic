@@ -1,5 +1,4 @@
-﻿import cv2
-import requests
+﻿import requests
 import time
 from googleapiclient.discovery import build
 from ultralytics import YOLO
@@ -15,7 +14,9 @@ SEARCH_KEYWORDS = "cháy lớn|hỏa hoạn|cháy nhà trực tiếp"
 # Khởi tạo AI
 print("🧠 Đang nạp bộ não YOLOv8...")
 model = YOLO('best.pt')
-youtube_client = build('youtube', 'v3', developerKey=YOUTUBE_API_KEY)
+# Pre-resolve 'fire' class ID for performance optimization
+fire_class_id = next((k for k, v in model.names.items() if v == 'fire'), None)
+youtube_client = build('youtube', 'v3', developerKey=AIzaSyD_T-8t388wXCpbq8jDlNF8d1eHHB1X8jE)
 
 # Bộ nhớ tạm để không quét lại video đã báo cáo
 processed_videos = set() 
@@ -73,7 +74,7 @@ def verify_fire_with_ai(video_id, title):
             # Kiểm tra xem có khung 'fire' nào không
             for r in results:
                 for box in r.boxes:
-                    if model.names[int(box.cls[0])] == 'fire':
+                    if int(box.cls[0]) == fire_class_id:
                         fire_confirmed = True
                         break
             if fire_confirmed: break
