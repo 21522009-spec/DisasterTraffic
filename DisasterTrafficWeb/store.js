@@ -10,6 +10,9 @@ const DATA_DIR = path.join(__dirname, "data");
 const EVENTS_FILE = path.join(DATA_DIR, "external_events.json");
 const REPORTS_FILE = path.join(DATA_DIR, "reports.json");
 
+let eventsCache = null;
+let reportsCache = null;
+
 // small helper to avoid corruption on partial writes
 async function writeAtomic(filePath, jsonObj) {
   const tmp = filePath + ".tmp";
@@ -26,26 +29,40 @@ async function readJson(filePath, fallback) {
   }
 }
 
+async function loadCacheIfEmpty() {
+  if (eventsCache === null) {
+    eventsCache = await readJson(EVENTS_FILE, { events: [] });
+  }
+  if (reportsCache === null) {
+    reportsCache = await readJson(REPORTS_FILE, { reports: [] });
+  }
+}
+
 export async function ensureStore() {
   await fs.mkdir(DATA_DIR, { recursive: true });
-  const events = await readJson(EVENTS_FILE, { events: [] });
-  const reports = await readJson(REPORTS_FILE, { reports: [] });
-  if (!events?.events) await writeAtomic(EVENTS_FILE, { events: [] });
-  if (!reports?.reports) await writeAtomic(REPORTS_FILE, { reports: [] });
+  await loadCacheIfEmpty();
+
+  if (!eventsCache?.events) {
+    eventsCache = { events: [] };
+    await writeAtomic(EVENTS_FILE, eventsCache);
+  }
+  if (!reportsCache?.reports) {
+    reportsCache = { reports: [] };
+    await writeAtomic(REPORTS_FILE, reportsCache);
+  }
 }
 
 export async function getAll() {
-  const events = await readJson(EVENTS_FILE, { events: [] });
-  const reports = await readJson(REPORTS_FILE, { reports: [] });
+  await loadCacheIfEmpty();
   return {
-    externalEvents: events.events || [],
-    reports: reports.reports || [],
+    externalEvents: eventsCache.events || [],
+    reports: reportsCache.reports || [],
   };
 }
 
 export async function upsertExternalEvents(incoming) {
-  const cur = await readJson(EVENTS_FILE, { events: [] });
-  const map = new Map((cur.events || []).map(e => [e.id, e]));
+  await loadCacheIfEmpty();
+  const map = new Map((eventsCache.events || []).map(e => [e.id, e]));
 
   let inserted = 0;
   for (const e of incoming) {
@@ -54,12 +71,24 @@ export async function upsertExternalEvents(incoming) {
   }
 
   const merged = Array.from(map.values());
-  await writeAtomic(EVENTS_FILE, { events: merged });
+  const newEventsObj = { events: merged };
+
+  // Update cache immediately
+  eventsCache = newEventsObj;
+
+  try {
+    await writeAtomic(EVENTS_FILE, newEventsObj);
+  } catch (err) {
+    console.error("CRITICAL: Failed to write external events to disk, cache may be out of sync. Reloading from disk.");
+    eventsCache = await readJson(EVENTS_FILE, { events: [] });
+    throw err;
+  }
+
   return { inserted, total: merged.length };
 }
 
 export async function addReport({ type, severity, description, lat, lon }) {
-  const cur = await readJson(REPORTS_FILE, { reports: [] });
+  await loadCacheIfEmpty();
   const now = Date.now();
 
   const report = {
@@ -72,13 +101,25 @@ export async function addReport({ type, severity, description, lat, lon }) {
     time: now,
   };
 
-  const arr = cur.reports || [];
+  const arr = reportsCache.reports ? [...reportsCache.reports] : [];
   arr.push(report);
 
   // simple retention: cap to last 2000
   arr.sort((a, b) => b.time - a.time);
   const capped = arr.slice(0, 2000);
 
-  await writeAtomic(REPORTS_FILE, { reports: capped });
+  const newReportsObj = { reports: capped };
+
+  // Update cache immediately
+  reportsCache = newReportsObj;
+
+  try {
+    await writeAtomic(REPORTS_FILE, newReportsObj);
+  } catch (err) {
+    console.error("CRITICAL: Failed to write reports to disk, cache may be out of sync. Reloading from disk.");
+    reportsCache = await readJson(REPORTS_FILE, { reports: [] });
+    throw err;
+  }
+
   return report;
 }
