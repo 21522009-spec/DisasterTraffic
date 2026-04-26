@@ -1,4 +1,3 @@
-/* global maplibregl, io */
 const statusEl = document.getElementById("status");
 const toastEl = document.getElementById("toast");
 
@@ -15,8 +14,8 @@ const btnClearSubscribe = document.getElementById("btn-clear-subscribe");
 const subStatusEl = document.getElementById("sub-status");
 
 let subscribeMode = false;
-let subscribePoints = []; // [ [lon,lat], [lon,lat] ]
-let subscribedBbox = loadSubscribedBbox(); // {minLon,minLat,maxLon,maxLat}
+let subscribePoints = []; 
+let subscribedBbox = loadSubscribedBbox(); 
 
 function setStatus(msg) { statusEl.textContent = msg; }
 function showToast(msg, ms = 5000) {
@@ -50,8 +49,6 @@ function updateSubStatus() {
   else subStatusEl.textContent = `Subscribed bbox: [${subscribedBbox.minLon.toFixed(3)}, ${subscribedBbox.minLat.toFixed(3)}] → [${subscribedBbox.maxLon.toFixed(3)}, ${subscribedBbox.maxLat.toFixed(3)}]`;
 }
 updateSubStatus();
-
-// --- Map init (MapLibre + OSM raster style)
 const map = new maplibregl.Map({
   container: "map",
   style: {
@@ -71,7 +68,7 @@ const map = new maplibregl.Map({
     ],
     id: "blank",
   },
-  center: [106.7, 10.78], // HCMC-ish
+  center: [106.7, 10.78],
   zoom: 5,
 });
 
@@ -121,7 +118,6 @@ function setLayerVisible(layerId, visible) {
   map.setLayoutProperty(layerId, "visibility", visible ? "visible" : "none");
 }
 
-// Optional traffic layer: TomTom raster tiles via backend proxy
 function ensureTrafficLayer() {
   if (map.getSource("tomtom-traffic-flow")) return;
 
@@ -250,7 +246,6 @@ function escapeHtml(s) {
     .replaceAll("'", "&#039;");
 }
 
-// --- Subscribe bbox rendering
 function drawSubscribeBbox() {
   if (!map.isStyleLoaded()) return;
 
@@ -294,7 +289,6 @@ function drawSubscribeBbox() {
   }
 }
 
-// Lấy dữ liệu từ backend, cập nhật cache và map sources. Gọi khi load trang và khi có socket thông báo update.
 async function fetchJSON(url) {
   const r = await fetch(url);
   if (!r.ok) throw new Error(`${url} -> ${r.status}`);

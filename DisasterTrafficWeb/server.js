@@ -4,7 +4,7 @@ import { Server as SocketIOServer } from "socket.io";
 import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
-import mongoose from "mongoose"; // <-- ĐÃ THÊM: Import Mongoose
+import mongoose from "mongoose"; 
 
 import { ensureStore, getAll, upsertExternalEvents, addReport } from "./store.js";
 import disasterRoutes from "./routes/disasterRoutes.js";
@@ -13,9 +13,7 @@ import Alert from "./models/Alert.js";
 
 dotenv.config();
 
-// ==========================================
 // 1. KẾT NỐI MONGODB ATLAS & TẠO SCHEMA
-// ==========================================
 const MONGO_URI = process.env.MONGO_URI || "";
 if (MONGO_URI) {
     mongoose.connect(MONGO_URI)
@@ -26,8 +24,6 @@ if (MONGO_URI) {
 }
 
 // Khuôn mẫu (Schema) cho dữ liệu Cảnh báo thiên tai/hỏa hoạn hiện được định nghĩa và lấy từ mongoose.models trong các controller/service
-// ==========================================
-
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -73,10 +69,7 @@ function normalizeBboxQuery(q) {
     };
 }
 
-// ==========================================
-// 2. CÁC API MỚI CHO MONGODB (ĐỒ ÁN)
-// ==========================================
-
+// 2. CÁC API MỚI CHO MONGODB 
 // API: Lấy danh sách lịch sử cảnh báo từ MongoDB
 app.get('/api/alerts', async (req, res) => {
     try {
@@ -109,8 +102,7 @@ const requireApiKey = (req, res, next) => {
 app.post('/api/alerts', requireApiKey, async (req, res) => {
     try {
         const payload = req.body;
-
-        // Fail-Fast: Reject unknown fields to prevent Mass Assignment
+        // Fail-Fast
         const allowedFields = ['type', 'address', 'lng', 'lat'];
         const payloadKeys = Object.keys(payload);
         for (const key of payloadKeys) {
@@ -120,8 +112,6 @@ app.post('/api/alerts', requireApiKey, async (req, res) => {
         }
 
         const { type, address, lng, lat } = payload;
-
-        // Validation limits explicitly
         if (!type || !address || lng == null || lat == null) {
             return res.status(400).json({ error: 'Bad Request: Missing required fields' });
         }
@@ -154,9 +144,6 @@ app.post('/api/alerts', requireApiKey, async (req, res) => {
     }
 });
 
-// ==========================================
-// CÁC API VÀ LOGIC CŨ (GIỮ NGUYÊN)
-// ==========================================
 
 app.get("/api/all", async (req, res) => {
     const bbox = normalizeBboxQuery(req.query.bbox);
@@ -179,7 +166,6 @@ app.post("/api/reports", async (req, res) => {
             description: String(description || "").slice(0, 500),
         });
 
-        // Broadcast notification for old logic
         io.emit("report:new", rep);
 
         res.json(rep);

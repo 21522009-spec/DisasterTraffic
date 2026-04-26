@@ -24,7 +24,7 @@
 
     <div class="w-80 bg-white shadow-xl z-10 flex flex-col">
         <div class="p-5 border-b">
-            <h1 class="text-xl font-bold text-blue-700">HCM City Monitor</h1>
+            <h1 class="text-xl font-bold text-blue-700">DisasterTraffic</h1>
             <p class="text-sm text-gray-500">Giám sát Giao thông & Thiên tai</p>
         </div>
 
@@ -60,9 +60,7 @@
     <div id="map" class="flex-1 relative z-0"></div>
 
     <script>
-        // ==========================================
         // 1. KHỞI TẠO BẢN ĐỒ LEAFLET & OPENSTREETMAP
-        // ==========================================
         // Tọa độ TP.HCM: Vĩ độ (lat) 10.762622, Kinh độ (lng) 106.660172
         const map = L.map('map').setView([10.762622, 106.660172], 13);
 
@@ -72,15 +70,13 @@
             maxZoom: 19
         }).addTo(map);
 
-        // ==========================================
         // 2. LỚP GIAO THÔNG (TRAFFIC) TỪ TOMTOM
-        // ==========================================
         const tomtomKey = 'J17ByXMwxXysUPGX15WIuNA8bcw6odPa'; // Key của bạn
 
         // Gọi API lấy dữ liệu kẹt xe của TomTom
         const trafficLayer = L.tileLayer(`https://api.tomtom.com/traffic/map/4/tile/flow/relative/{z}/{x}/{y}.png?key=${tomtomKey}`, {
             maxZoom: 19,
-            opacity: 0.8 // Làm mờ nhẹ đi để dễ nhìn bản đồ nền
+            opacity: 0.8 
         });
 
         // Bật Traffic mặc định
@@ -95,9 +91,7 @@
             }
         });
 
-        // ==========================================
         // 3. KẾT NỐI SOCKET.IO VÀ XỬ LÝ MARKER CẢNH BÁO
-        // ==========================================
         const socket = io(); // Tự động kết nối tới server Node.js
 
         // Hàm tạo Marker (Biểu tượng) bằng Leaflet
@@ -155,7 +149,6 @@
 
         // Lắng nghe khi có sự cố mới từ Server (Do AI gửi hoặc test)
         socket.on('new-alert', (newAlert) => {
-            // Vẽ ngay lập tức lên bản đồ
             addAlertMarker(newAlert.lng, newAlert.lat, newAlert.type);
             addAlertToSidebar(newAlert.address, newAlert.type);
 

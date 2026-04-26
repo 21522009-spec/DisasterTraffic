@@ -10,7 +10,6 @@ const DATA_DIR = path.join(__dirname, "data");
 const EVENTS_FILE = path.join(DATA_DIR, "external_events.json");
 const REPORTS_FILE = path.join(DATA_DIR, "reports.json");
 
-// small helper to avoid corruption on partial writes
 async function writeAtomic(filePath, jsonObj) {
   const tmp = filePath + ".tmp";
   await fs.writeFile(tmp, JSON.stringify(jsonObj, null, 2), "utf8");
@@ -75,7 +74,6 @@ export async function addReport({ type, severity, description, lat, lon }) {
   const arr = cur.reports || [];
   arr.push(report);
 
-  // simple retention: cap to last 2000
   arr.sort((a, b) => b.time - a.time);
   const capped = arr.slice(0, 2000);
 
