@@ -8,7 +8,7 @@ from vidgear.gears import CamGear
 model = YOLO('best.pt')
 api_url = "https://constance-unproclaimed-maryland.ngrok-free.dev/api/alerts"
 # 2. CÀI ĐẶT NGUỒN YOUTUBE / FACEBOOK
-# Dán link video hoặc luồng Live stream vào đây để test.
+# link video hoặc luồng Live stream để test.
 video_url = "https://www.youtube.com/shorts/pxZjypF9kps"
 
 print("Đang phân tích link YouTube... Vui lòng đợi vài giây để lấy luồng!")

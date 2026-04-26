@@ -4,12 +4,11 @@ from googleapiclient.discovery import build
 from ultralytics import YOLO
 from vidgear.gears import CamGear
 
-# ==========================================
+
 # CẤU HÌNH HỆ THỐNG
-# ==========================================
 YOUTUBE_API_KEY = "AIzaSyD_T-8t388wXCpbq8jDlNF8d1eHHB1X8jE"
-NGROK_API_URL = "https://constance-unproclaimed-maryland.ngrok-free.dev/api/alerts" # Dán link Ngrok
-SEARCH_KEYWORDS = "cháy lớn|hỏa hoạn|cháy nhà trực tiếp"
+NGROK_API_URL = "https://constance-unproclaimed-maryland.ngrok-free.dev/api/alerts" 
+SEARCH_KEYWORDS = "cháy lớn|hỏa hoạn|cháy nhà trực tiếp" #Các từ khóa để tìm kiếm video liên quan đến cháy trên YouTube
 
 # Khởi tạo AI
 print("🧠 Đang nạp bộ não YOLOv8...")
@@ -21,9 +20,7 @@ youtube_client = build('youtube', 'v3', developerKey=AIzaSyD_T-8t388wXCpbq8jDlNF
 # Bộ nhớ tạm để không quét lại video đã báo cáo
 processed_videos = set() 
 
-# ==========================================
 # HÀM 1: TÌM KIẾM VIDEO TRÊN YOUTUBE
-# ==========================================
 def find_latest_fire_videos():
     print(f"\n🔍 Đang lùng sục YouTube với từ khóa: {SEARCH_KEYWORDS}")
     try:
@@ -49,15 +46,13 @@ def find_latest_fire_videos():
         print(f"❌ Lỗi khi tìm kiếm YouTube: {e}")
         return []
 
-# ======================================================================
 # HÀM 2: AI KIỂM TRA ĐỘ CHÍNH XÁC CỦA VIDEO TRONG TRƯỜNG HỢP CẦN TEST
-# ======================================================================
 def verify_fire_with_ai(video_id, title):
     video_url = f"https://www.youtube.com/watch?v={video_id}"
     print(f"👁️ AI đang soi video: {title}")
     
     try:
-        # Mở luồng video chất lượng thấp để chạy nhanh
+        # Mở luồng video chất lượng thấp 
         options = {"STREAM_RESOLUTION": "480p"}
         stream = CamGear(source=video_url, stream_mode=True, logging=False, **options).start()
         
@@ -87,15 +82,13 @@ def verify_fire_with_ai(video_id, title):
         print(f"⚠️ Không thể đọc luồng video này, bỏ qua: {e}")
         return False
 
-# ==========================================
 # HÀM 3: GỬI CẢNH BÁO LÊN APP
-# ==========================================
 def send_alert_to_app(title, video_url):
     print("🚨 XÁC NHẬN CÓ CHÁY! Đang bắn thông báo lên App...")
     data = {
         "type": "fire",
         "address": f"Phát hiện từ mạng xã hội: {title}",
-        "lat": 10.8700, # Tọa độ giả định (ví dụ khu vực ĐHQG/UIT)
+        "lat": 10.8700, # Tọa độ giả định (ví dụ khu vực UIT)
         "lng": 106.8031,
         "sourceLink": video_url # Gửi kèm link để người dùng bấm vào xem
     }
@@ -105,9 +98,7 @@ def send_alert_to_app(title, video_url):
     except Exception as e:
         print(f"❌ Lỗi kết nối Node.js: {e}")
 
-# ==========================================
 # VÒNG LẶP CHÍNH (CHẠY 24/7)
-# ==========================================
 print("🚀 HỆ THỐNG THỢ SĂN LỬA ĐÃ KHỞI ĐỘNG!")
 while True:
     # 1. Tìm video
@@ -128,6 +119,6 @@ while True:
             else:
                 print("🧐 Cảnh báo giả (Không thấy lửa thật). Bỏ qua.")
                 
-    # 3. Nghỉ ngơi 3 phút (180 giây) trước khi đi quét mạng xã hội lần tiếp theo
-    # Điều này giúp không bị Google khóa API vì request quá nhiều
+    # 3. Nghỉ ngơi 3 phút trước khi đi quét mạng xã hội lần tiếp theo
+    # Điều này giúp không bị Google khóa API vì over request
     time.sleep(180)

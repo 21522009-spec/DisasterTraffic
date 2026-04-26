@@ -4,7 +4,7 @@ import MapView, { Marker, Callout } from 'react-native-maps';
 import io from 'socket.io-client';
 import axios from 'axios';
 
-// Thay đổi IP này thành IP máy chủ backend của bạn
+// Chưa cập nhật URL backend, sẽ bổ sung sau
 const BACKEND_URL = 'http://192.168.1.xxx:3000';
 
 const MapScreen = () => {
@@ -19,7 +19,7 @@ const MapScreen = () => {
     };
 
     useEffect(() => {
-        // 1. Lấy dữ liệu 초기 từ Backend (Initial Load)
+        // 1. Lấy dữ liệu từ Backend (Initial Load)
         const fetchInitialDisasters = async () => {
             try {
                 const response = await axios.get(`${BACKEND_URL}/api/disasters`);

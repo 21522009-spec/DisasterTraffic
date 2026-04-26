@@ -5,7 +5,7 @@ const alertSchema = new mongoose.Schema({
         type: String,
         required: [true, 'Type is required'],
         enum: {
-            values: ['fire', 'flood', 'traffic', 'earthquake'], // Add other valid types as needed
+            values: ['fire', 'flood', 'traffic', 'earthquake'], 
             message: '{VALUE} is not a valid alert type'
         }
     },
@@ -32,7 +32,7 @@ const alertSchema = new mongoose.Schema({
         default: Date.now
     }
 }, {
-    strict: true // Enforce strict mode to prevent saving extraneous fields
+    strict: true
 });
 
 const Alert = mongoose.models.Alert || mongoose.model('Alert', alertSchema);

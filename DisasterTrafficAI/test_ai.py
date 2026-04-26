@@ -2,7 +2,7 @@
 import cv2
 
 # 1. Gọi bộ não AI 
-# Hãy chắc chắn rằng file 'best.pt' nằm cùng thư mục với file code này
+# Note:file 'best.pt' nằm cùng thư mục với file code này
 model = YOLO('best.pt')
 
 # 2. Định nghĩa file ảnh dùng để test
@@ -14,7 +14,7 @@ source_img = 'test_image.jpg'
 results = model(source_img, nms=True, conf=0.10)
 # 4. Vẽ khung nhận diện và hiển thị kết quả lên màn hình
 # 'plot()' sẽ tự động vẽ khung màu đỏ quanh vật thể được nhận diện
-# và ghi tên nhãn (fire, smoke) kèm độ tự tin (%)
+# và ghi tên nhãn (fire, smoke) kèm độ tự tin/chắc chắn (%)
 for r in results:
     im_array = r.plot()  # Vẽ khung lên ảnh
     
