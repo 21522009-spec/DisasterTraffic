@@ -23,7 +23,7 @@ def _try_load():
     _load_attempted = True
 
     try:
-        from underthesea import ner as _ner  # noqa: WPS433
+        from underthesea import ner as _ner
 
         _ner_fn = _ner
         logger.info("[ner] underthesea loaded — NER hybrid mode ON")

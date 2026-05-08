@@ -153,10 +153,7 @@ export default function ExploreScreen() {
     );
 }
 
-// ============================================================
 // Report modal
-// ============================================================
-
 function ReportModal({
     visible,
     onClose,
@@ -218,7 +215,7 @@ function ReportModal({
         }
     };
 
-    const types: AlertType[] = ['traffic', 'flood', 'fire', 'landslide', 'storm', 'other'];
+    const types: AlertType[] = ['traffic', 'flood', 'fire', 'landslide', 'storm', 'earthquake', 'other'];
 
     return (
         <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
@@ -327,10 +324,6 @@ function ReportModal({
         </Modal>
     );
 }
-
-// ============================================================
-// styles
-// ============================================================
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#f9fafb' },

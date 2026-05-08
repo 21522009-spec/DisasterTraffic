@@ -88,6 +88,8 @@ const TYPE_META = {
 };
 
 function metaFor(type) { return TYPE_META[type] || TYPE_META.other; }
+// UI hiện chỉ có 4 toggle (fire/flood/traffic/other). Các disaster type khác
+// (earthquake/landslide/storm) gom vào nhóm 'other' để filter chung.
 function bucketOf(type) {
     if (type === 'fire' || type === 'flood' || type === 'traffic') return type;
     return 'other';
@@ -208,6 +210,7 @@ function openReportModal() {
                         <option value="fire">Hỏa hoạn</option>
                         <option value="landslide">Sạt lở</option>
                         <option value="storm">Bão</option>
+                        <option value="earthquake">Động đất</option>
                         <option value="other">Khác</option>
                     </select>
                 </div>
@@ -281,7 +284,7 @@ function openReportModal() {
                 throw new Error(err.error || `HTTP ${r.status}`);
             }
             close();
-            showToast('Đã gửi báo cáo, cảm ơn bạn ✅');
+            showToast('Đã gửi báo cáo, cảm ơn bạn.');
         } catch (e) {
             showToast('Gửi báo cáo lỗi: ' + e.message);
         }
@@ -440,7 +443,7 @@ map.on('click', (e) => {
         state.subscribePoints = [];
         drawSubscribeBbox();
         updateSubStatus();
-        showToast('Đã lưu vùng theo dõi ✅');
+        showToast('Đã lưu vùng theo dõi.');
     }
 });
 
@@ -477,7 +480,7 @@ socket.on('new-alert', (alert) => {
         state.subscribedBbox &&
         withinBbox(alert.lng, alert.lat, state.subscribedBbox)
     ) {
-        notifyBrowser(`⚠️ ${alert.type}: ${alert.address || ''}`);
+        notifyBrowser(`${alert.type}: ${alert.address || ''}`);
     }
 });
 

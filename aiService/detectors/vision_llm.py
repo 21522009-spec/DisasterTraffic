@@ -1,8 +1,8 @@
 """
 Verify disaster type từ 1 frame ảnh dùng Google Gemini.
 
-So với YOLO fire-only, Gemini phân loại được 5 type: fire / flood /
-landslide / storm / traffic, trả 'none' nếu ảnh không phải disaster.
+So với YOLO fire-only, Gemini phân loại được 6 type: fire / flood /
+landslide / storm / earthquake / traffic, trả 'none' nếu ảnh không phải disaster.
 
 Cần GOOGLE_API_KEY (lấy free tại https://aistudio.google.com/app/apikey)
 và pip install google-generativeai. Nếu chưa có thì các function trả
@@ -37,10 +37,11 @@ _PROMPT = """You are a disaster classifier. Look at this image and decide which 
 - "flood": water clearly covering streets, fields, or buildings
 - "landslide": collapsed earth/mud/rocks, road blocked by slide
 - "storm": heavy storm damage (fallen trees, debris, wind)
+- "earthquake": collapsed buildings, cracked roads/walls, rubble from quake
 - "traffic": serious traffic accident or major road jam
 - "none": normal scene, TV studio, graphic, indoor, no disaster visible
 
-Reply with EXACTLY ONE word (lowercase): fire, flood, landslide, storm, traffic, or none.
+Reply with EXACTLY ONE word (lowercase): fire, flood, landslide, storm, earthquake, traffic, or none.
 Do NOT explain. Do NOT add punctuation."""
 
 
@@ -63,7 +64,7 @@ def _get_model():
         return None
 
     try:
-        import google.generativeai as genai  # noqa: WPS433
+        import google.generativeai as genai
 
         genai.configure(api_key=api_key)
 
@@ -102,7 +103,7 @@ def _try_next_model() -> bool:
     if not candidates or len(candidates) < 2:
         return False
     try:
-        import google.generativeai as genai  # noqa: WPS433
+        import google.generativeai as genai
 
         # Bỏ candidate hiện tại, lấy cái tiếp theo
         candidates = candidates[1:]
@@ -138,7 +139,7 @@ def verify_disaster(
                     hoặc bác bỏ.
 
     Returns:
-        (disaster_type, confidence) — type ∈ {fire,flood,landslide,storm,traffic}.
+        (disaster_type, confidence) — type ∈ {fire,flood,landslide,storm,earthquake,traffic}.
         None nếu LLM trả 'none' / disable / lỗi.
     """
     model = _get_model()
@@ -196,7 +197,7 @@ def verify_disaster(
     if text is None:
         return None
 
-    valid = ("fire", "flood", "landslide", "storm", "traffic")
+    valid = ("fire", "flood", "landslide", "storm", "earthquake", "traffic")
     for t in valid:
         if t in text:
             # Confidence cao hơn nếu LLM khớp với hint

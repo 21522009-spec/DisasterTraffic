@@ -138,7 +138,7 @@ async def _fetch_feed_entries(url: str) -> List[dict]:
 
     def _parse() -> List[dict]:
         try:
-            import feedparser  # noqa: WPS433
+            import feedparser
 
             feed = feedparser.parse(content)
             out: List[dict] = []

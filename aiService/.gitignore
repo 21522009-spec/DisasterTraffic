@@ -25,3 +25,7 @@ ENV/
 
 # Logs
 *.log
+
+# Model binaries — quá nặng, không commit. Train lại theo TRAIN_FIRE_MODEL.md
+models/*.pt
+!models/.gitkeep

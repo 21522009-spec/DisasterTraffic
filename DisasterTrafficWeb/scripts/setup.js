@@ -41,20 +41,20 @@ function step(n, msg) {
 }
 
 function main() {
-    log(`${C.bold}🚀 DisasterTrafficWeb — Setup${C.reset}`);
+    log(`${C.bold}DisasterTrafficWeb - Setup${C.reset}`);
     log(`Working dir: ${ROOT}`, 'dim');
 
-    // ---------- 1. Node version ----------
+    // Node version
     step(1, 'Kiểm tra Node.js version');
     const nodeMajor = parseInt(process.versions.node.split('.')[0], 10);
     if (nodeMajor < 18) {
-        log(`✗ Node ${process.versions.node} quá cũ. Cần >= 18.`, 'red');
+        log(`Node ${process.versions.node} quá cũ. Cần >= 18.`, 'red');
         log(`  Tải tại https://nodejs.org/ (chọn LTS)`, 'dim');
         process.exit(1);
     }
-    log(`✓ Node ${process.versions.node} OK`, 'green');
+    log(`Node ${process.versions.node} OK`, 'green');
 
-    // ---------- 2. npm install ----------
+    // Cài deps
     step(2, 'Cài dependencies');
     const nodeModulesPath = join(ROOT, 'node_modules');
     const force = process.argv.includes('--force');
@@ -67,32 +67,32 @@ function main() {
             shell: true,
         });
         if (res.status !== 0) {
-            log('✗ npm install lỗi.', 'red');
+            log('npm install lỗi.', 'red');
             process.exit(1);
         }
-        log('✓ npm install xong', 'green');
+        log('npm install xong', 'green');
     } else {
-        log(`✓ node_modules đã có (chạy với --force để cài lại)`, 'green');
+        log(`node_modules đã có (chạy với --force để cài lại)`, 'green');
     }
 
-    // ---------- 3. .env ----------
+    // .env
     step(3, 'Setup file .env');
     const envPath = join(ROOT, '.env');
     const envExamplePath = join(ROOT, '.env.example');
 
     if (!existsSync(envExamplePath)) {
-        log('✗ Không tìm thấy .env.example', 'red');
+        log('Không tìm thấy .env.example', 'red');
         process.exit(1);
     }
 
     if (!existsSync(envPath)) {
         copyFileSync(envExamplePath, envPath);
-        log('✓ Đã copy .env.example → .env', 'green');
+        log('Đã copy .env.example -> .env', 'green');
     } else {
-        log('✓ .env đã tồn tại (giữ nguyên)', 'green');
+        log('.env đã tồn tại (giữ nguyên)', 'green');
     }
 
-    // ---------- 4. Checklist .env ----------
+    // Checklist biến
     step(4, 'Checklist các biến cần điền vào .env');
     const envContent = readFileSync(envPath, 'utf-8');
 
@@ -114,12 +114,12 @@ function main() {
             value === 'secret_key';
 
         if (c.required && isPlaceholder) {
-            log(`  ✗ ${c.key}: chưa được set hoặc còn placeholder. ${C.dim}(${c.hint})${C.reset}`, 'yellow');
+            log(`  [missing] ${c.key}: chưa được set hoặc còn placeholder. ${C.dim}(${c.hint})${C.reset}`, 'yellow');
             allOK = false;
         } else if (isPlaceholder) {
-            log(`  ⚠ ${c.key}: chưa set (optional). ${C.dim}(${c.hint})${C.reset}`, 'dim');
+            log(`  [skip] ${c.key}: chưa set (optional). ${C.dim}(${c.hint})${C.reset}`, 'dim');
         } else {
-            log(`  ✓ ${c.key}: OK`, 'green');
+            log(`  [ok]   ${c.key}`, 'green');
         }
     }
 
@@ -127,15 +127,13 @@ function main() {
         log(`\n${C.yellow}Vui lòng mở file .env và điền các giá trị còn thiếu trước khi chạy server.${C.reset}`);
     }
 
-    // ---------- 5. Hướng dẫn camera ----------
     step(5, 'Thêm camera');
     log('  Camera được quản lý qua Admin Panel sau khi server khởi động:', 'dim');
-    log(`  → ${C.cyan}http://localhost:3000/admin.html${C.reset}  (yêu cầu tài khoản Enterprise)`);
+    log(`  -> ${C.cyan}http://localhost:3000/admin.html${C.reset}  (yêu cầu tài khoản Enterprise)`);
     log('  Hoặc dùng script seed cho môi trường dev:', 'dim');
-    log(`  → ${C.cyan}npm run seed:cameras${C.reset}  (chỉ dùng khi dev, KHÔNG chạy trên production)`);
+    log(`  -> ${C.cyan}npm run seed:cameras${C.reset}  (chỉ dùng khi dev, KHÔNG chạy trên production)`);
 
-    // ---------- Done ----------
-    log(`\n${C.bold}${C.green}✅ Setup xong!${C.reset}`);
+    log(`\n${C.bold}${C.green}Setup xong.${C.reset}`);
     log(`\nBước tiếp theo:`);
     log(`  1. Mở file ${C.cyan}.env${C.reset} điền các giá trị còn thiếu`);
     log(`  2. Chạy server: ${C.cyan}npm run dev${C.reset}`);
@@ -144,6 +142,6 @@ function main() {
 }
 
 main().catch((err) => {
-    log(`✗ Setup lỗi: ${err.message}`, 'red');
+    log(`Setup lỗi: ${err.message}`, 'red');
     process.exit(1);
 });

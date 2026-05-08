@@ -34,7 +34,7 @@ _fire_load_attempted = False
 def _load_general():
     global _general_model
     if _general_model is None:
-        from ultralytics import YOLO  # noqa: WPS433
+        from ultralytics import YOLO
 
         logger.info(f"Đang load YOLO general model: {YOLO_MODEL} (lần đầu sẽ download ~6MB)...")
         _general_model = YOLO(YOLO_MODEL)
@@ -52,11 +52,24 @@ def _load_fire():
         return None
 
     try:
-        from ultralytics import YOLO  # noqa: WPS433
+        from ultralytics import YOLO
 
         logger.info(f"Đang load fire model: {FIRE_MODEL_PATH}")
-        _fire_model = YOLO(FIRE_MODEL_PATH)
-        logger.success("Fire model đã sẵn sàng.")
+        m = YOLO(FIRE_MODEL_PATH)
+        # Verify model có class 'fire' không — nếu không, đây không phải fire detector,
+        # bỏ qua để tránh tạo alert giả (vd: model car detector sẽ trigger fire alert
+        # cho mọi xe trong frame).
+        names = getattr(m, "names", {}) or {}
+        has_fire_class = any(str(v).lower() == "fire" for v in names.values())
+        if not has_fire_class:
+            logger.warning(
+                f"Model {FIRE_MODEL_PATH} không có class 'fire' "
+                f"(classes: {list(names.values())}). Bỏ qua fire detection."
+            )
+            _fire_model = None
+        else:
+            _fire_model = m
+            logger.success("Fire model đã sẵn sàng.")
     except Exception as e:
         logger.error(f"Không load được fire model ({FIRE_MODEL_PATH}): {e}")
         _fire_model = None
@@ -82,15 +95,20 @@ def _count_vehicles(model, frame) -> int:
 
 
 def _has_fire(model, frame) -> bool:
-    """True nếu fire model detect ít nhất 1 box trên ngưỡng confidence."""
+    """True nếu detect được box thuộc class 'fire'. Bỏ qua các class khác."""
     results = model.predict(frame, verbose=False, conf=YOLO_CONF)
     if not results:
         return False
+    names = getattr(model, "names", {}) or {}
+    fire_ids = {k for k, v in names.items() if str(v).lower() == "fire"}
+    if not fire_ids:
+        return False
     for r in results:
-        if r.boxes is None:
+        if r.boxes is None or r.boxes.cls is None:
             continue
-        if len(r.boxes) > 0:
-            return True
+        for cls_id in r.boxes.cls.cpu().numpy().astype(int):
+            if int(cls_id) in fire_ids:
+                return True
     return False
 
 

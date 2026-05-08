@@ -27,7 +27,7 @@ else:
     # Mock detector không cần frame, vẫn chấp nhận tham số 2 cho cùng signature
     from detectors.mock import detect as _mock_detect
 
-    def run_detect(camera, frame):  # noqa: WPS430
+    def run_detect(camera, frame):
         return _mock_detect(camera)
 
 
@@ -147,8 +147,8 @@ async def run_worker(camera: dict, stop_event: asyncio.Event) -> None:
                 continue
 
             logger.info(
-                f"[worker:{name}] 🚨 DETECTED {detection['type']} "
-                f"(conf={detection.get('confidence')}, sev={detection.get('severity')}) — {detection.get('description')}"
+                f"[worker:{name}] DETECTED {detection['type']} "
+                f"(conf={detection.get('confidence')}, sev={detection.get('severity')}) - {detection.get('description')}"
             )
 
             result = await post_alert(camera, detection)

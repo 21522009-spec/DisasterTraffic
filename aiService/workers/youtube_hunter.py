@@ -49,6 +49,7 @@ _SEVERITY = {
     "flood": 3,
     "landslide": 4,
     "storm": 3,
+    "earthquake": 5,
     "traffic": 2,
 }
 
@@ -66,7 +67,7 @@ def _get_youtube_client():
     """Build YouTube Data API v3 client. None nếu chưa có API key."""
     global _youtube_client
     if _youtube_client is None and YOUTUBE_API_KEY:
-        from googleapiclient.discovery import build  # noqa: WPS433
+        from googleapiclient.discovery import build
 
         _youtube_client = build("youtube", "v3", developerKey=YOUTUBE_API_KEY)
     return _youtube_client
@@ -76,7 +77,7 @@ def _get_yolo():
     """Lazy-load YOLO fire model. None nếu chưa có FIRE_MODEL_PATH."""
     global _yolo_model
     if _yolo_model is None and FIRE_MODEL_PATH:
-        from ultralytics import YOLO  # noqa: WPS433
+        from ultralytics import YOLO
 
         logger.info(f"[hunter] Loading fire model: {FIRE_MODEL_PATH}")
         _yolo_model = YOLO(FIRE_MODEL_PATH)
@@ -165,7 +166,7 @@ def _open_stream(video_id: str):
     """Mở stream qua vidgear/yt-dlp. Trả stream object hoặc None."""
     for attempt in range(2):
         try:
-            from vidgear.gears import CamGear  # noqa: WPS433
+            from vidgear.gears import CamGear
 
             url = f"https://www.youtube.com/watch?v={video_id}"
             options = {
@@ -193,7 +194,7 @@ def _open_stream(video_id: str):
 def _frame_to_jpeg(frame, quality: int = 80) -> Optional[bytes]:
     """Encode 1 frame BGR → JPEG bytes. None nếu thất bại."""
     try:
-        import cv2  # noqa: WPS433
+        import cv2
 
         ok, buf = cv2.imencode(".jpg", frame, [int(cv2.IMWRITE_JPEG_QUALITY), quality])
         return buf.tobytes() if ok else None
@@ -213,7 +214,7 @@ async def _verify_disaster_in_stream(
         hint:     Loại disaster gợi ý từ keyword search (vd 'fire' cho keyword "cháy").
 
     Returns:
-        (disaster_type, confidence) — type ∈ {fire,flood,landslide,storm,traffic}.
+        (disaster_type, confidence) — type ∈ {fire,flood,landslide,storm,earthquake,traffic}.
         None nếu không có disaster / lỗi / cả 2 verifier đều disable.
     """
     yolo = _get_yolo()
@@ -415,8 +416,8 @@ async def run_youtube_hunter(stop_event: asyncio.Event) -> None:
                     final_conf = dconf * loc_conf
 
                     logger.info(
-                        f"[hunter] 🚨 {dtype.upper()} @ {addr} "
-                        f"({lat:.4f}, {lng:.4f}) detect={dconf:.2f} loc={loc_conf:.2f} → {final_conf:.2f}"
+                        f"[hunter] DETECTED {dtype.upper()} @ {addr} "
+                        f"({lat:.4f}, {lng:.4f}) detect={dconf:.2f} loc={loc_conf:.2f} -> {final_conf:.2f}"
                     )
 
                     result = await _post_alert(

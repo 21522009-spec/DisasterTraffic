@@ -72,29 +72,29 @@ const SEED = [
 
 async function main() {
     if (process.env.NODE_ENV === 'production') {
-        console.error('❌ Script này không được chạy trên production. Thêm camera qua Admin Panel.');
+        console.error('Script này không được chạy trên production. Thêm camera qua Admin Panel.');
         process.exit(1);
     }
 
     const MONGO_URI = (process.env.MONGO_URI || '').trim();
     if (!MONGO_URI) {
-        console.error('❌ MONGO_URI chưa được set trong .env');
+        console.error('MONGO_URI chưa được set trong .env');
         process.exit(1);
     }
 
     if (DRY) {
         console.log('--- DRY RUN ---');
-        for (const c of SEED) console.log('📷', c.name, `(${c.lat}, ${c.lng})`);
+        for (const c of SEED) console.log(' -', c.name, `(${c.lat}, ${c.lng})`);
         console.log(`Total: ${SEED.length} cameras (no DB write).`);
         return;
     }
 
     await mongoose.connect(MONGO_URI, { serverSelectionTimeoutMS: 10000 });
-    console.log('✅ MongoDB connected');
+    console.log('MongoDB connected');
 
     if (RESET) {
         const r = await Camera.deleteMany({});
-        console.log(`🗑️  Đã xoá ${r.deletedCount} camera cũ`);
+        console.log(`Đã xoá ${r.deletedCount} camera cũ`);
     }
 
     let inserted = 0;
@@ -109,11 +109,11 @@ async function main() {
         inserted++;
     }
 
-    console.log(`✅ Seed xong: +${inserted} mới, ${skipped} đã có (skip).`);
+    console.log(`Seed xong: +${inserted} mới, ${skipped} đã có (skip).`);
     await mongoose.disconnect();
 }
 
 main().catch((err) => {
-    console.error('❌ Seed lỗi:', err);
+    console.error('Seed lỗi:', err);
     process.exit(1);
 });
