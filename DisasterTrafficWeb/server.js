@@ -1,216 +1,200 @@
-import express from "express";
-import http from "http";
-import { Server as SocketIOServer } from "socket.io";
-import dotenv from "dotenv";
-import path from "path";
-import { fileURLToPath } from "url";
-import mongoose from "mongoose"; 
+import express from 'express';
+import http from 'http';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
+import cors from 'cors';
+import helmet from 'helmet';
+import compression from 'compression';
+import mongoose from 'mongoose';
+import { Server as SocketIOServer } from 'socket.io';
 
-import { ensureStore, getAll, upsertExternalEvents, addReport } from "./store.js";
-import disasterRoutes from "./routes/disasterRoutes.js";
-import { initCrawler } from "./services/crawler.js";
-import Alert from "./models/Alert.js";
+import disasterRoutes from './routes/disasterRoutes.js';
+import alertRoutes from './routes/alertRoutes.js';
+import cameraRoutes from './routes/cameraRoutes.js';
+import deviceRoutes from './routes/deviceRoutes.js';
+import authRoutes from './routes/authRoutes.js';
+import tomtomProxy from './services/tomtomProxy.js';
+import { initCrawler } from './services/crawler.js';
 
 dotenv.config();
-
-// 1. KẾT NỐI MONGODB ATLAS & TẠO SCHEMA
-const MONGO_URI = process.env.MONGO_URI || "";
-if (MONGO_URI) {
-    mongoose.connect(MONGO_URI)
-        .then(() => console.log('✅ Đã kết nối MongoDB Atlas thành công!'))
-        .catch(err => console.log('❌ Lỗi kết nối MongoDB:', err));
-} else {
-    console.log('⚠️ Cảnh báo: Chưa có MONGO_URI trong file .env');
-}
-
-// Khuôn mẫu (Schema) cho dữ liệu Cảnh báo thiên tai/hỏa hoạn hiện được định nghĩa và lấy từ mongoose.models trong các controller/service
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const PORT = parseInt(process.env.PORT || "3000", 10);
-const TOMTOM_KEY = (process.env.TOMTOM_KEY || "").trim();
+const PORT = parseInt(process.env.PORT || '3000', 10);
+const NODE_ENV = process.env.NODE_ENV || 'development';
+const TOMTOM_KEY = (process.env.TOMTOM_KEY || '').trim();
+const MONGO_URI = (process.env.MONGO_URI || '').trim();
 
+// ============================================================
+// 1. Validate required env vars before anything else
+// ============================================================
+const missingEnv = [];
+if (!MONGO_URI) missingEnv.push('MONGO_URI');
+if (!process.env.JWT_SECRET) missingEnv.push('JWT_SECRET');
+if (!process.env.AI_WEBHOOK_SECRET) missingEnv.push('AI_WEBHOOK_SECRET');
+if (missingEnv.length > 0) {
+    console.error(`❌ Thiếu biến môi trường bắt buộc: ${missingEnv.join(', ')}. Server không thể khởi động.`);
+    process.exit(1);
+}
+
+// Strength check — placeholder values phải bị reject
+const PLACEHOLDER_SECRETS = new Set([
+    'replace_me',
+    'replace_me_with_a_long_random_string',
+    'changeme',
+    'secret',
+    'password',
+]);
+for (const [name, val] of [
+    ['JWT_SECRET', process.env.JWT_SECRET],
+    ['AI_WEBHOOK_SECRET', process.env.AI_WEBHOOK_SECRET],
+]) {
+    const v = String(val || '').trim();
+    if (PLACEHOLDER_SECRETS.has(v.toLowerCase())) {
+        console.error(`❌ ${name} vẫn là placeholder ('${v}'). Thay ngay bằng chuỗi random ≥ 32 ký tự.`);
+        process.exit(1);
+    }
+    if (v.length < 16) {
+        console.warn(`⚠️  ${name} chỉ ${v.length} ký tự — yếu. Khuyến nghị ≥ 32 ký tự ngẫu nhiên.`);
+    } else if (v.length < 32) {
+        console.warn(`⚠️  ${name} hơi ngắn (${v.length} ký tự). Khuyến nghị ≥ 32 ký tự.`);
+    }
+}
+
+// ============================================================
+// 2. MongoDB connection
+// ============================================================
+mongoose
+    .connect(MONGO_URI, { serverSelectionTimeoutMS: 10000 })
+    .then(() => console.log('✅ MongoDB Atlas connected'))
+    .catch((err) => {
+        console.error('❌ MongoDB connection error:', err.message);
+        process.exit(1);
+    });
+
+mongoose.connection.on('disconnected', () => {
+    console.warn('⚠️  MongoDB disconnected');
+});
+
+// ============================================================
+// 3. Express app
+// ============================================================
 const app = express();
-app.use(express.json({ limit: "256kb" }));
 
-// Trạng thái của frontend và các file tĩnh (HTML/CSS/JS) sẽ được phục vụ từ thư mục "public"
-app.use(express.static(path.join(__dirname, "public")));
+// Helmet — security headers (CSP nới lỏng vì frontend dùng inline + CDN)
+app.use(
+    helmet({
+        contentSecurityPolicy: false,
+        crossOriginEmbedderPolicy: false,
+    })
+);
 
-const server = http.createServer(app);
-// Parse ALLOWED_ORIGINS from environment variables (comma-separated), fallback to http://localhost:3000
+// CORS cho HTTP routes (mobile app, frontend khác origin sẽ dùng).
 const allowedOrigins = process.env.ALLOWED_ORIGINS
-    ? process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim())
-    : ["http://localhost:3000"];
+    ? process.env.ALLOWED_ORIGINS.split(',').map((s) => s.trim()).filter(Boolean)
+    : ['http://localhost:3000'];
 
+if (NODE_ENV === 'production' && allowedOrigins.includes('*')) {
+    console.warn('⚠️  ALLOWED_ORIGINS=* trên production — mọi origin đều được phép. Nên đặt domain cụ thể.');
+}
+
+app.use(
+    cors({
+        origin: (origin, cb) => {
+            // Cho phép request không có origin (mobile native, curl, server-to-server)
+            if (!origin) return cb(null, true);
+            if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
+                return cb(null, true);
+            }
+            return cb(new Error('Not allowed by CORS'));
+        },
+        credentials: false,
+    })
+);
+
+app.use(compression());
+app.use(express.json({ limit: '256kb' }));
+
+// Static files cho web frontend
+app.use(express.static(path.join(__dirname, 'public')));
+
+// ============================================================
+// 4. HTTP + Socket.IO
+// ============================================================
+const server = http.createServer(app);
 const io = new SocketIOServer(server, {
     cors: { origin: allowedOrigins },
 });
 
-function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
-function isFiniteNumber(x) { return typeof x === "number" && Number.isFinite(x); }
-// Sử dụng router mới
+io.on('connection', (socket) => {
+    socket.emit('hello', { ts: Date.now() });
+});
+
+// ============================================================
+// 5. Routes
+// ============================================================
+// Health check
+app.get('/api/health', (req, res) => {
+    res.json({
+        status: 'ok',
+        env: NODE_ENV,
+        mongo: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+        time: new Date().toISOString(),
+    });
+});
+
+// TomTom traffic tile proxy — KHÔNG lộ key ra client
+app.use('/tiles/traffic', tomtomProxy);
+
+// Auth
+app.use('/api/auth', authRoutes);
+
+// Disasters & Alerts API
 app.use('/api/disasters', disasterRoutes);
+app.use('/api/alerts', alertRoutes(io));
+app.use('/api/cameras', cameraRoutes(io));
+app.use('/api/devices', deviceRoutes);
 
-// Khởi tạo Crawler
+// 404 handler cho /api/*
+app.use('/api', (req, res) => {
+    res.status(404).json({ error: 'API endpoint not found' });
+});
+
+// Error handler cuối
+// eslint-disable-next-line no-unused-vars
+app.use((err, req, res, next) => {
+    console.error('[server] Unhandled error:', err);
+    if (err && err.message === 'Not allowed by CORS') {
+        return res.status(403).json({ error: err.message });
+    }
+    res.status(500).json({ error: 'Internal server error' });
+});
+
+// ============================================================
+// 6. Background tasks
+// ============================================================
 initCrawler(io);
-function normalizeBboxQuery(q) {
-    // bbox=minLon,minLat,maxLon,maxLat
-    if (!q) return null;
-    const parts = String(q).split(",").map(s => parseFloat(s.trim()));
-    if (parts.length !== 4 || parts.some(v => !isFiniteNumber(v))) return null;
-    const [minLon, minLat, maxLon, maxLat] = parts;
-    if (minLon > maxLon || minLat > maxLat) return null;
-    return {
-        minLon: clamp(minLon, -180, 180),
-        maxLon: clamp(maxLon, -180, 180),
-        minLat: clamp(minLat, -90, 90),
-        maxLat: clamp(maxLat, -90, 90),
-    };
-}
 
-// 2. CÁC API MỚI CHO MONGODB 
-// API: Lấy danh sách lịch sử cảnh báo từ MongoDB
-app.get('/api/alerts', async (req, res) => {
-    try {
-        // Lấy 50 cảnh báo mới nhất, sắp xếp giảm dần theo thời gian
-        const alerts = await Alert.find().sort({ createdAt: -1 }).limit(50);
-        res.json(alerts);
-    } catch (error) {
-        console.error("Lỗi lấy dữ liệu từ MongoDB:", error);
-        res.status(500).json({ error: 'Lỗi lấy dữ liệu từ Database' });
-    }
-});
-
-// API: Nhận cảnh báo mới (từ AI hoặc test) và lưu vào MongoDB
-// Middleware kiểm tra API Key để chống Data Poisoning
-const requireApiKey = (req, res, next) => {
-    const apiKey = req.headers['x-api-key'];
-    const validKey = process.env.AI_WEBHOOK_SECRET;
-
-    if (!validKey) {
-        console.warn('⚠️ Server không cấu hình AI_WEBHOOK_SECRET, từ chối request!');
-        return res.status(500).json({ error: 'Server configuration error' });
-    }
-
-    if (apiKey !== validKey) {
-        return res.status(401).json({ error: 'Unauthorized: Invalid API Key' });
-    }
-    next();
-};
-
-app.post('/api/alerts', requireApiKey, async (req, res) => {
-    try {
-        const payload = req.body;
-        // Fail-Fast
-        const allowedFields = ['type', 'address', 'lng', 'lat'];
-        const payloadKeys = Object.keys(payload);
-        for (const key of payloadKeys) {
-            if (!allowedFields.includes(key)) {
-                return res.status(400).json({ error: `Bad Request: Extraneous field '${key}' not allowed.` });
-            }
-        }
-
-        const { type, address, lng, lat } = payload;
-        if (!type || !address || lng == null || lat == null) {
-            return res.status(400).json({ error: 'Bad Request: Missing required fields' });
-        }
-        if (!isFiniteNumber(lng) || lng < -180 || lng > 180) {
-            return res.status(400).json({ error: 'Bad Request: Invalid longitude' });
-        }
-        if (!isFiniteNumber(lat) || lat < -90 || lat > 90) {
-            return res.status(400).json({ error: 'Bad Request: Invalid latitude' });
-        }
-
-        const validTypes = ['fire', 'flood', 'traffic', 'earthquake'];
-        if (!validTypes.includes(type)) {
-            return res.status(400).json({ error: `Bad Request: Invalid type '${type}'` });
-        }
-
-        // Lưu thẳng vào Database
-        const newAlert = new Alert({ type, address, lng, lat });
-        await newAlert.save();
-
-        // Bắn Socket.io báo cho tất cả người dùng trên Web/App biết có biến mới
-        io.emit('new-alert', newAlert);
-
-        res.status(201).json({ message: 'Đã lưu cảnh báo thành công', data: newAlert });
-    } catch (error) {
-        console.error("Lỗi lưu dữ liệu vào MongoDB:", error);
-        if (error.name === 'ValidationError') {
-            return res.status(400).json({ error: 'Bad Request: Validation Error', details: error.message });
-        }
-        res.status(500).json({ error: 'Lỗi lưu dữ liệu' });
-    }
-});
-
-
-app.get("/api/all", async (req, res) => {
-    const bbox = normalizeBboxQuery(req.query.bbox);
-    const data = await getAll(bbox);
-    res.json(data);
-});
-
-app.post("/api/reports", async (req, res) => {
-    const { lon, lat, type, severity, description } = req.body;
-    if (!isFiniteNumber(lon) || !isFiniteNumber(lat) || !type) {
-        return res.status(400).json({ error: "Invalid data" });
-    }
-
-    try {
-        const rep = await addReport({
-            lon: clamp(lon, -180, 180),
-            lat: clamp(lat, -90, 90),
-            type: String(type).slice(0, 100),
-            severity: clamp(parseInt(severity, 10) || 1, 1, 5),
-            description: String(description || "").slice(0, 500),
-        });
-
-        io.emit("report:new", rep);
-
-        res.json(rep);
-    } catch (err) {
-        console.error("Error adding report:", err);
-        res.status(500).json({ error: "Server error" });
-    }
-});
-
-app.post("/api/webhook/eonet", async (req, res) => {
-    // Tạm giữ nguyên webhookũ...
-    res.json({ ok: true });
-});
-
-async function ingestUSGS() {
-    // Logic cũ giữ nguyên...
-}
-
-async function ingestEONET() {
-    // Logic cũ giữ nguyên...
-}
-
-async function ingestAllOnce() {
-    try { await ingestUSGS(); } catch (e) { console.error("[USGS]", e.message); }
-    try { await ingestEONET(); } catch (e) { console.error("[EONET]", e.message); }
-}
-
-async function runTasks() {
-    await ensureStore();
-    await ingestAllOnce();
-    setInterval(async () => {
-        try { await ingestUSGS(); } catch (e) { }
-    }, 10 * 60 * 1000);
-    setInterval(async () => {
-        try { await ingestEONET(); } catch (e) { }
-    }, 30 * 60 * 1000);
-}
-
-runTasks().catch(err => {
-    console.error("Init error", err);
-});
-
+// ============================================================
+// 7. Start
+// ============================================================
 server.listen(PORT, () => {
-    console.log(`🚀 Server listening on port ${PORT}`);
+    console.log(`🚀 Server listening on http://localhost:${PORT}`);
+    console.log(`   ENV=${NODE_ENV}`);
     if (!TOMTOM_KEY) {
-        console.warn("⚠️  TOMTOM_KEY is missing. Map will not load correctly.");
+        console.warn('⚠️  TOMTOM_KEY missing — traffic tile proxy và TomTom incidents sẽ không hoạt động.');
     }
 });
+
+// Graceful shutdown
+function shutdown(sig) {
+    console.log(`[server] ${sig} received, closing...`);
+    server.close(() => {
+        mongoose.connection.close().finally(() => process.exit(0));
+    });
+    setTimeout(() => process.exit(1), 10000).unref();
+}
+process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('SIGTERM', () => shutdown('SIGTERM'));
