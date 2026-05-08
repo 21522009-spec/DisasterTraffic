@@ -1,7 +1,0 @@
-.vs/
-
-# Environment files — chứa credentials, không commit
-.env
-.env.local
-.env.*.local
-!.env.example
