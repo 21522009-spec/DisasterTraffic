@@ -3,9 +3,9 @@ import { StyleSheet, View, Text, Alert } from 'react-native';
 import MapView, { Marker, Callout } from 'react-native-maps';
 import io from 'socket.io-client';
 import axios from 'axios';
+import { SERVER_URL } from '../lib/config';
 
-// Chưa cập nhật URL backend, sẽ bổ sung sau
-const BACKEND_URL = 'http://192.168.1.xxx:3000';
+const BACKEND_URL = SERVER_URL;
 
 const MapScreen = () => {
     const [disasters, setDisasters] = useState([]);

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DisasterTraffic — Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen font-sans">
+    <header class="bg-white shadow">
+        <div class="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div>
+                <h1 class="text-xl font-bold text-blue-700">DisasterTraffic — Admin</h1>
+                <p class="text-sm text-gray-500">Quản lý camera đã đăng ký</p>
+            </div>
+            <a href="/" class="text-sm text-blue-600 hover:underline">← Về bản đồ</a>
+        </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto px-6 py-6 space-y-6">
+        <!-- Auth status -->
+        <section id="auth-section" class="bg-white rounded-xl shadow p-4">
+            <div id="auth-status" class="text-sm"></div>
+        </section>
+
+        <!-- Upgrade gate — hiện khi không phải Enterprise -->
+        <section id="upgrade-gate" class="hidden bg-amber-50 border border-amber-200 rounded-xl p-8 text-center">
+            <div class="text-4xl mb-3">🔒</div>
+            <h3 class="font-bold text-lg text-amber-800 mb-2">Yêu cầu gói Tổ chức (Enterprise)</h3>
+            <p class="text-amber-700 text-sm mb-4">Quản lý camera chỉ dành cho tài khoản gói Enterprise.</p>
+            <a href="/login.html?upgrade=1" class="inline-block px-6 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-medium transition-colors">
+                Nâng cấp ngay
+            </a>
+        </section>
+
+        <!-- Add form -->
+        <section class="bg-white rounded-xl shadow p-6">
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="font-semibold">Thêm / Sửa camera</h2>
+                <button id="btn-reset-form" class="text-xs text-gray-500 hover:underline">Reset form</button>
+            </div>
+
+            <form id="cam-form" class="grid grid-cols-2 gap-3">
+                <input type="hidden" id="f-id">
+
+                <div class="col-span-2">
+                    <label class="text-xs text-gray-600">Tên</label>
+                    <input id="f-name" required type="text" placeholder="Ngã 4 Hàng Xanh"
+                        class="w-full px-3 py-2 border rounded-lg">
+                </div>
+
+                <div>
+                    <label class="text-xs text-gray-600">Loại stream</label>
+                    <select id="f-kind" class="w-full px-3 py-2 border rounded-lg">
+                        <option value="mock">mock (file MP4)</option>
+                        <option value="cctv">cctv</option>
+                        <option value="youtube">youtube</option>
+                        <option value="rtsp">rtsp</option>
+                        <option value="http">http</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="text-xs text-gray-600">Trạng thái</label>
+                    <select id="f-status" class="w-full px-3 py-2 border rounded-lg">
+                        <option value="active">active</option>
+                        <option value="paused">paused</option>
+                        <option value="broken">broken</option>
+                        <option value="pending">pending</option>
+                    </select>
+                </div>
+
+                <div class="col-span-2">
+                    <label class="text-xs text-gray-600">Stream URL</label>
+                    <input id="f-streamUrl" required type="text" placeholder="mock://hang-xanh.mp4 hoặc rtsp://..."
+                        class="w-full px-3 py-2 border rounded-lg font-mono text-sm">
+                </div>
+
+                <div>
+                    <label class="text-xs text-gray-600">Vĩ độ</label>
+                    <input id="f-lat" required type="number" step="0.000001" placeholder="10.7991"
+                        class="w-full px-3 py-2 border rounded-lg">
+                </div>
+
+                <div>
+                    <label class="text-xs text-gray-600">Kinh độ</label>
+                    <input id="f-lng" required type="number" step="0.000001" placeholder="106.7115"
+                        class="w-full px-3 py-2 border rounded-lg">
+                </div>
+
+                <div class="col-span-2">
+                    <label class="text-xs text-gray-600">Địa chỉ</label>
+                    <input id="f-address" type="text" placeholder="Quận Bình Thạnh, TP.HCM"
+                        class="w-full px-3 py-2 border rounded-lg">
+                </div>
+
+                <div class="col-span-2">
+                    <label class="text-xs text-gray-600">Loại sự kiện được phép (chọn nhiều)</label>
+                    <div class="flex flex-wrap gap-3 mt-1 text-sm">
+                        <label class="flex items-center gap-1"><input type="checkbox" value="traffic" class="evt"> traffic</label>
+                        <label class="flex items-center gap-1"><input type="checkbox" value="fire" class="evt"> fire</label>
+                        <label class="flex items-center gap-1"><input type="checkbox" value="flood" class="evt"> flood</label>
+                        <label class="flex items-center gap-1"><input type="checkbox" value="landslide" class="evt"> landslide</label>
+                        <label class="flex items-center gap-1"><input type="checkbox" value="storm" class="evt"> storm</label>
+                        <label class="flex items-center gap-1"><input type="checkbox" value="other" class="evt"> other</label>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">Để trống = cho phép tất cả</p>
+                </div>
+
+                <div>
+                    <label class="text-xs text-gray-600">Cooldown (ms)</label>
+                    <input id="f-cooldown" type="number" min="0" value="60000"
+                        class="w-full px-3 py-2 border rounded-lg">
+                </div>
+
+                <div class="col-span-2">
+                    <label class="text-xs text-gray-600">Ghi chú</label>
+                    <textarea id="f-notes" rows="2"
+                        class="w-full px-3 py-2 border rounded-lg"></textarea>
+                </div>
+
+                <div class="col-span-2 flex justify-end gap-2 mt-2">
+                    <button type="submit" id="btn-submit"
+                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                        Tạo mới
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <!-- List -->
+        <section class="bg-white rounded-xl shadow">
+            <div class="p-4 border-b flex items-center justify-between">
+                <h2 class="font-semibold">Danh sách camera</h2>
+                <button id="btn-reload" class="text-sm px-3 py-1 bg-gray-100 rounded hover:bg-gray-200">
+                    🔄 Tải lại
+                </button>
+            </div>
+            <div id="cam-list" class="divide-y"></div>
+            <p id="cam-empty" class="p-6 text-center text-gray-500 hidden">Chưa có camera nào.</p>
+        </section>
+    </main>
+
+    <div id="toast"
+        class="fixed right-6 bottom-6 px-4 py-3 rounded-lg shadow-lg bg-gray-900 text-white text-sm hidden z-50">
+    </div>
+
+    <script type="module" src="/js/admin.js"></script>
+</body>
+</html>

@@ -19,7 +19,8 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.nguyenhuy1920.DisasterTrafficApp"
     },
     "web": {
       "output": "static",
@@ -38,11 +39,26 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "serverUrl": "http://localhost:3000",
+      "router": {},
+      "eas": {
+        "projectId": "744568fe-1bf2-4c1e-919f-e852b130c634"
+      }
+    },
+    "owner": "nguyenhuy1920",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/744568fe-1bf2-4c1e-919f-e852b130c634"
     }
   }
 }

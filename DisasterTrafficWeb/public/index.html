@@ -13,11 +13,29 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <style>
-        /* Đảm bảo bản đồ không bị lỗi hiển thị */
-        #map {
-            width: 100%;
-            height: 100%;
+        #map { width: 100%; height: 100%; }
+        .toast {
+            position: fixed; right: 14px; bottom: 14px; max-width: 360px;
+            padding: 10px 12px; border-radius: 12px; border: 1px solid #e5e7eb;
+            background: rgba(255,255,255,0.95); box-shadow: 0 8px 25px rgba(0,0,0,0.10);
+            font-size: 13px; z-index: 1000;
         }
+        .hidden { display: none; }
+        .modal-backdrop {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+            display: flex; align-items: center; justify-content: center; z-index: 1100;
+        }
+        .modal {
+            width: min(520px, calc(100% - 28px)); background: #fff; border-radius: 16px;
+            border: 1px solid #e5e7eb; padding: 16px; box-shadow: 0 18px 40px rgba(0,0,0,0.25);
+        }
+        .modal h3 { margin: 0 0 10px 0; font-weight: 700; }
+        .modal .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .modal input, .modal select, .modal textarea {
+            width: 100%; padding: 8px 10px; border-radius: 10px; border: 1px solid #d1d5db;
+        }
+        .modal textarea { min-height: 80px; resize: vertical; }
+        .modal .actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 12px; }
     </style>
 </head>
 <body class="h-screen w-screen flex overflow-hidden bg-gray-50 font-sans">
@@ -26,9 +44,11 @@
         <div class="p-5 border-b">
             <h1 class="text-xl font-bold text-blue-700">DisasterTraffic</h1>
             <p class="text-sm text-gray-500">Giám sát Giao thông & Thiên tai</p>
+            <!-- Auth bar -->
+            <div id="auth-bar" class="mt-3"></div>
         </div>
 
-        <div class="p-5 flex-1">
+        <div class="p-5 flex-1 overflow-y-auto">
             <h2 class="font-semibold mb-3">Bộ lọc bản đồ</h2>
 
             <div class="space-y-3">
@@ -44,121 +64,49 @@
                     <input type="checkbox" id="toggle-flood" class="form-checkbox h-5 w-5 text-blue-400" checked>
                     <span class="text-gray-700">Cảnh báo Ngập lụt</span>
                 </label>
+                <label class="flex items-center space-x-3 cursor-pointer">
+                    <input type="checkbox" id="toggle-other" class="form-checkbox h-5 w-5 text-gray-600" checked>
+                    <span class="text-gray-700">Khác (kẹt xe, sạt lở...)</span>
+                </label>
+                <label class="flex items-center space-x-3 cursor-pointer">
+                    <input type="checkbox" id="toggle-cameras" class="form-checkbox h-5 w-5 text-purple-600" checked>
+                    <span class="text-gray-700">📷 Camera đã đăng ký</span>
+                </label>
             </div>
 
-            <div class="mt-8">
+            <div id="admin-link" class="mt-3 text-xs text-gray-500 hidden">
+                <a href="/admin.html" class="text-blue-600 hover:underline">⚙️ Quản lý camera</a>
+            </div>
+            <div id="upgrade-link" class="mt-3 text-xs text-gray-500 hidden">
+                <a href="/login.html?upgrade=1" class="text-amber-600 hover:underline">⭐ Nâng cấp để quản lý camera</a>
+            </div>
+
+            <div class="mt-6 flex gap-2 flex-wrap">
+                <button id="btn-add-report" class="px-3 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700">
+                    + Báo cáo
+                </button>
+                <button id="btn-subscribe" class="px-3 py-2 bg-gray-100 border rounded-lg text-sm hover:bg-gray-200">
+                    Theo dõi vùng
+                </button>
+                <button id="btn-clear-subscribe" class="px-3 py-2 bg-gray-100 border rounded-lg text-sm hover:bg-gray-200">
+                    Xoá vùng
+                </button>
+            </div>
+            <p id="sub-status" class="text-xs text-gray-500 mt-2">Chưa theo dõi vùng nào.</p>
+
+            <div class="mt-6">
                 <h2 class="font-semibold mb-3 text-red-600 flex items-center">
                     <span class="animate-pulse h-3 w-3 bg-red-600 rounded-full inline-block mr-2"></span>
                     Cảnh báo trực tiếp
                 </h2>
-                <ul id="alert-list" class="space-y-2 text-sm overflow-y-auto max-h-60">
-                </ul>
+                <ul id="alert-list" class="space-y-2 text-sm overflow-y-auto max-h-72"></ul>
             </div>
         </div>
     </div>
 
     <div id="map" class="flex-1 relative z-0"></div>
+    <div id="toast" class="toast hidden"></div>
 
-    <script>
-        // 1. KHỞI TẠO BẢN ĐỒ LEAFLET & OPENSTREETMAP
-        // Tọa độ TP.HCM: Vĩ độ (lat) 10.762622, Kinh độ (lng) 106.660172
-        const map = L.map('map').setView([10.762622, 106.660172], 13);
-
-        // Lớp bản đồ nền (Base Map) - Có đầy đủ Hoàng Sa, Trường Sa
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors',
-            maxZoom: 19
-        }).addTo(map);
-
-        // 2. LỚP GIAO THÔNG (TRAFFIC) TỪ TOMTOM
-        const tomtomKey = 'J17ByXMwxXysUPGX15WIuNA8bcw6odPa'; // Key của bạn
-
-        // Gọi API lấy dữ liệu kẹt xe của TomTom
-        const trafficLayer = L.tileLayer(`https://api.tomtom.com/traffic/map/4/tile/flow/relative/{z}/{x}/{y}.png?key=${tomtomKey}`, {
-            maxZoom: 19,
-            opacity: 0.8 
-        });
-
-        // Bật Traffic mặc định
-        trafficLayer.addTo(map);
-
-        // Xử lý nút bật/tắt Traffic ở Sidebar
-        document.getElementById('toggle-traffic').addEventListener('change', (e) => {
-            if (e.target.checked) {
-                map.addLayer(trafficLayer);
-            } else {
-                map.removeLayer(trafficLayer);
-            }
-        });
-
-        // 3. KẾT NỐI SOCKET.IO VÀ XỬ LÝ MARKER CẢNH BÁO
-        const socket = io(); // Tự động kết nối tới server Node.js
-
-        // Hàm tạo Marker (Biểu tượng) bằng Leaflet
-        function addAlertMarker(lng, lat, type) {
-            const iconHtml = type === 'fire'
-                ? `<div class="w-10 h-10 flex items-center justify-center rounded-full shadow-lg text-2xl bg-white animate-bounce border-2 border-red-500">🔥</div>`
-                : `<div class="w-10 h-10 flex items-center justify-center rounded-full shadow-lg text-2xl bg-white animate-bounce border-2 border-blue-500">🌊</div>`;
-
-            const customIcon = L.divIcon({
-                html: iconHtml,
-                className: '', // Bỏ class rỗng để tránh viền trắng mặc định của Leaflet
-                iconSize: [40, 40],
-                iconAnchor: [20, 40] // Đặt tâm của icon chỉ đúng xuống mặt đường
-            });
-
-            // LƯU Ý: Leaflet nhận tọa độ theo thứ tự [Vĩ độ, Kinh độ] -> [lat, lng]
-            L.marker([lat, lng], { icon: customIcon }).addTo(map);
-        }
-
-        // Hàm thêm thông báo vào Sidebar
-        function addAlertToSidebar(locationName, type) {
-            const list = document.getElementById('alert-list');
-            const li = document.createElement('li');
-
-            const strong = document.createElement('strong');
-            if (type === 'fire') {
-                li.className = "p-3 bg-red-50 border-l-4 border-red-500 rounded text-red-700 shadow-sm transition-all";
-                strong.textContent = "🔥 Cháy: ";
-            } else {
-                li.className = "p-3 bg-blue-50 border-l-4 border-blue-500 rounded text-blue-700 shadow-sm transition-all";
-                strong.textContent = "🌊 Ngập: ";
-            }
-
-            li.appendChild(strong);
-            li.appendChild(document.createTextNode(locationName));
-            // Đẩy thông báo lên đầu danh sách
-            list.prepend(li);
-        }
-
-        // Hàm lấy lịch sử cảnh báo từ Database khi vừa mở trang
-        async function loadHistoryAlerts() {
-            try {
-                const response = await fetch('/api/alerts');
-                const alerts = await response.json();
-
-                // Vẽ các điểm từ DB lên bản đồ
-                alerts.reverse().forEach(alert => {
-                    addAlertMarker(alert.lng, alert.lat, alert.type);
-                    addAlertToSidebar(alert.address, alert.type);
-                });
-            } catch (error) {
-                console.error("Lỗi tải dữ liệu:", error);
-            }
-        }
-
-        // Lắng nghe khi có sự cố mới từ Server (Do AI gửi hoặc test)
-        socket.on('new-alert', (newAlert) => {
-            addAlertMarker(newAlert.lng, newAlert.lat, newAlert.type);
-            addAlertToSidebar(newAlert.address, newAlert.type);
-
-            // Trượt bản đồ tới điểm vừa xảy ra sự cố
-            map.panTo([newAlert.lat, newAlert.lng]);
-        });
-
-        // Chạy hàm lấy dữ liệu từ DB ngay khi trình duyệt đọc xong code
-        loadHistoryAlerts();
-
-    </script>
+    <script type="module" src="/js/main.js"></script>
 </body>
 </html>

@@ -1,0 +1,24 @@
+# Core
+httpx==0.27.2
+python-dotenv==1.0.1
+loguru==0.7.2
+
+# Computer vision + YOLO
+opencv-python==4.10.0.84
+ultralytics==8.3.40        # YOLOv8/YOLO11 — auto-download yolov8n.pt on first run
+numpy<2.0                  # ultralytics compat
+
+# YouTube hunter
+google-api-python-client==2.149.0  # YouTube Data API v3
+vidgear==0.3.3                     # Streaming wrapper
+yt-dlp>=2024.10.7                  # Backend vidgear dùng để fetch YouTube
+
+# RSS hunter
+feedparser==6.0.11                 # Parse RSS/Atom
+
+# Vision LLM (Gemini) — multi-disaster verify
+google-generativeai==0.8.3
+
+# Optional NER tiếng Việt (cài thêm khi cần, nặng ~500MB)
+# pip install underthesea
+# underthesea==6.8.4
