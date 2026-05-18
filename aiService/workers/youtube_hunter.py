@@ -68,8 +68,16 @@ def _get_youtube_client():
     global _youtube_client
     if _youtube_client is None and YOUTUBE_API_KEY:
         from googleapiclient.discovery import build
+        import httplib2
 
-        _youtube_client = build("youtube", "v3", developerKey=YOUTUBE_API_KEY)
+        # Tăng timeout lên 120s vì 24 request concurrent dễ bị slow
+        http = httplib2.Http(timeout=120)
+        _youtube_client = build(
+            "youtube", "v3",
+            developerKey=YOUTUBE_API_KEY,
+            http=http,
+            cache_discovery=False,
+        )
     return _youtube_client
 
 
@@ -99,25 +107,37 @@ async def _search_one(
         return []
 
     def _sync_call():
-        try:
-            params = {
-                "part": "snippet",
-                "q": keyword,
-                "type": "video",
-                "maxResults": max_results,
-                "regionCode": "VN",
-                "relevanceLanguage": "vi",
-                "order": "date",
-            }
-            if event_type:
-                params["eventType"] = event_type
-            if published_after:
-                params["publishedAfter"] = published_after
-            req = client.search().list(**params)
-            return req.execute().get("items", [])
-        except Exception as e:
-            logger.error(f"[hunter] YouTube search '{keyword}' error: {e}")
-            return []
+        params = {
+            "part": "snippet",
+            "q": keyword,
+            "type": "video",
+            "maxResults": max_results,
+            "regionCode": "VN",
+            "relevanceLanguage": "vi",
+            "order": "date",
+        }
+        if event_type:
+            params["eventType"] = event_type
+        if published_after:
+            params["publishedAfter"] = published_after
+
+        # Retry tối đa 3 lần với backoff nếu gặp lỗi mạng/SSL tạm thời
+        import time as _time
+        last_err = None
+        for attempt in range(3):
+            try:
+                req = client.search().list(**params)
+                return req.execute().get("items", [])
+            except Exception as e:
+                last_err = e
+                err_msg = str(e).lower()
+                if any(x in err_msg for x in ["ssl", "connection", "timeout", "reset"]):
+                    if attempt < 2:
+                        _time.sleep(2 * (attempt + 1))
+                        continue
+                break
+        logger.error(f"[hunter] YouTube search '{keyword}' error: {last_err}")
+        return []
 
     loop = asyncio.get_running_loop()
     return await loop.run_in_executor(None, _sync_call)

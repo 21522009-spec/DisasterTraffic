@@ -150,7 +150,9 @@ def verify_disaster(
     if hint and hint not in ("none", None):
         prompt += f"\n\nHint: source caption suggests this might be '{hint}'. Confirm or reject."
 
-    def _call(m) -> Optional[str]:
+    def _call(m, retry_count: int = 0) -> Optional[str]:
+        import time as _time
+        import re as _re
         try:
             response = m.generate_content(
                 [
@@ -162,12 +164,9 @@ def verify_disaster(
                     "temperature": 0.1,
                 },
             )
-            # Đọc response.text qua quick accessor có thể raise nếu finish_reason
-            # là SAFETY/RECITATION/MAX_TOKENS — try parts trực tiếp.
             try:
                 return (response.text or "").strip().lower()
             except Exception:
-                # Inspect candidates để biết finish_reason → log nhẹ và return None
                 try:
                     cand = response.candidates[0] if response.candidates else None
                     fr = getattr(cand, "finish_reason", None)
@@ -180,15 +179,30 @@ def verify_disaster(
                 return None
         except Exception as exc:
             err_msg = str(exc)
-            # Model không tồn tại → switch fallback
+            # 404 = model không tồn tại → fallback model khác
             if "404" in err_msg or "not found" in err_msg.lower():
                 if _try_next_model():
                     new_m = _get_model()
                     if new_m is not None:
-                        return _call(new_m)  # retry 1 lần với model mới
+                        return _call(new_m)
                 logger.warning(
                     f"[vision] model không khả dụng và hết fallback: {err_msg}"
                 )
+                return None
+            # 429 = quota exceeded → đợi retry_delay rồi thử lại (tối đa 3 lần)
+            if "429" in err_msg or "quota" in err_msg.lower() or "rate" in err_msg.lower():
+                if retry_count < 3:
+                    # Parse "retry in N.NNNs" từ error message
+                    delay = 12  # default 12s (an toàn cho 5 RPM)
+                    match = _re.search(r"retry in (\d+(?:\.\d+)?)\s*s", err_msg)
+                    if match:
+                        delay = int(float(match.group(1))) + 1
+                    logger.info(
+                        f"[vision] rate limit, đợi {delay}s rồi thử lại (lần {retry_count + 1}/3)"
+                    )
+                    _time.sleep(delay)
+                    return _call(m, retry_count + 1)
+                logger.warning(f"[vision] hết quota sau 3 lần retry: {err_msg[:100]}")
                 return None
             logger.warning(f"[vision] verify error: {err_msg}")
             return None
