@@ -118,7 +118,16 @@ function buildPopupHtml(alert) {
     const time = alert.createdAt ? new Date(alert.createdAt).toLocaleString('vi-VN') : '--:--';
     const sev = alert.severity ? `<span class="px-2 py-0.5 rounded bg-${alert.severity >= 4 ? 'error' : 'primary'}/10 text-${alert.severity >= 4 ? 'error' : 'primary'} text-[10px] font-bold">LVL ${alert.severity}</span>` : '';
     const desc = alert.description ? `<div class="mt-2 text-sm text-on-surface border-t border-outline-variant/10 pt-2">${escapeHtml(alert.description)}</div>` : '';
-    
+    const link = alert.sourceUrl
+        ? `<div class="mt-2 pt-2 border-t border-outline-variant/10">
+               <a href="${escapeHtml(alert.sourceUrl)}" target="_blank" rel="noreferrer"
+                  class="inline-flex items-center gap-1.5 text-primary hover:underline text-[11px] font-data-mono uppercase">
+                   <span class="material-symbols-outlined text-[14px]">open_in_new</span>
+                   View Source
+               </a>
+           </div>`
+        : '';
+
     return `
         <div class="p-1 font-body-md" style="min-width:220px">
             <div class="flex items-center gap-2 font-bold mb-2">
@@ -132,6 +141,7 @@ function buildPopupHtml(alert) {
                 <span class="uppercase">${escapeHtml(alert.source || 'Community')}</span>
             </div>
             ${desc}
+            ${link}
         </div>
     `;
 }
