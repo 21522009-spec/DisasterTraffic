@@ -85,7 +85,27 @@ const alertSchema = new mongoose.Schema(
             maxlength: 1000,
             default: '',
         },
-        // Optional auto-expiry — Mongo TTL index will delete expired docs.
+        // Proximity votes for verification
+        votes: [
+            {
+                userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+                voteType: { type: String, enum: ['up', 'down'] },
+                voterLocation: {
+                    type: { type: String, enum: ['Point'], default: 'Point' },
+                    coordinates: { type: [Number] } // [lng, lat]
+                },
+                timestamp: { type: Date, default: Date.now }
+            }
+        ],
+        // GenAI summary for situation reports
+        summary: {
+            type: String,
+            default: ''
+        },
+        summaryExpiresAt: {
+            type: Date,
+            default: null
+        },
         expiresAt: {
             type: Date,
             default: null,

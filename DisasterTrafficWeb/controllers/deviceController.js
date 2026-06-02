@@ -11,7 +11,7 @@ const TOKEN_PATTERN = /^ExponentPushToken\[[A-Za-z0-9_-]+\]$/;
  */
 export const registerDevice = async (req, res) => {
     try {
-        const { token, platform, subscribedTypes, subscribedBbox } = req.body || {};
+        const { token, platform, subscribedTypes, subscribedBbox, lat, lng } = req.body || {};
 
         if (!token || typeof token !== 'string') {
             return res.status(400).json({ error: 'Bad Request: token required (string)' });
@@ -25,6 +25,12 @@ export const registerDevice = async (req, res) => {
         const update = { token, active: true };
         if (platform) update.platform = String(platform);
         if (Array.isArray(subscribedTypes)) update.subscribedTypes = subscribedTypes;
+        if (typeof lat === 'number' && typeof lng === 'number') {
+            update.lastLocation = {
+                type: 'Point',
+                coordinates: [lng, lat]
+            };
+        }
         if (subscribedBbox && typeof subscribedBbox === 'object') {
             const { minLon, minLat, maxLon, maxLat } = subscribedBbox;
             const valid =

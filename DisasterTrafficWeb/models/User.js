@@ -7,6 +7,7 @@ const userSchema = new mongoose.Schema({
     password: { type: String, required: true },
     plan:     { type: String, enum: ['free', 'pro', 'enterprise'], default: 'free' },
     planExpiresAt: { type: Date, default: null },
+    reputationScore: { type: Number, default: 100 },
 }, { timestamps: true });
 
 // Mongoose v7+ hooks không nhận next callback nữa — dùng async function trả về.

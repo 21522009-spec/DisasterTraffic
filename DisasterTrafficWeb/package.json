@@ -12,6 +12,7 @@
     "seed:cameras:reset": "node scripts/seedCameras.js --reset"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "axios": "^1.15.2",
     "bcryptjs": "^3.0.3",
     "compression": "^1.7.4",

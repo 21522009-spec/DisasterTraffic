@@ -14,6 +14,7 @@ import alertRoutes from './routes/alertRoutes.js';
 import cameraRoutes from './routes/cameraRoutes.js';
 import deviceRoutes from './routes/deviceRoutes.js';
 import authRoutes from './routes/authRoutes.js';
+import routingRoutes from './routes/routingRoutes.js';
 import tomtomProxy from './services/tomtomProxy.js';
 import { initCrawler } from './services/crawler.js';
 
@@ -135,6 +136,7 @@ app.use('/api/disasters', disasterRoutes);
 app.use('/api/alerts', alertRoutes(io));
 app.use('/api/cameras', cameraRoutes(io));
 app.use('/api/devices', deviceRoutes);
+app.use('/api/routing', routingRoutes);
 
 app.use('/api', (req, res) => {
     res.status(404).json({ error: 'API endpoint not found' });

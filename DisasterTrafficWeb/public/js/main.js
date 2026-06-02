@@ -128,6 +128,20 @@ function buildPopupHtml(alert) {
            </div>`
         : '';
 
+    const votesHtml = alert.source === 'community'
+        ? `<div class="mt-3 pt-2 border-t border-outline-variant/10 flex items-center justify-between">
+               <span class="text-[10px] font-bold text-on-surface-variant">Xác thực:</span>
+               <div class="flex gap-2">
+                   <button class="px-2 py-0.5 bg-primary/10 hover:bg-primary/20 text-primary text-[10px] font-bold rounded flex items-center gap-0.5" onclick="window.voteAlert('${alert._id}', 'up')">
+                       👍 up
+                   </button>
+                   <button class="px-2 py-0.5 bg-error/10 hover:bg-error/20 text-error text-[10px] font-bold rounded flex items-center gap-0.5" onclick="window.voteAlert('${alert._id}', 'down')">
+                       👎 down
+                   </button>
+               </div>
+           </div>`
+        : '';
+
     return `
         <div class="p-1 font-body-md" style="min-width:220px">
             <div class="flex items-center gap-2 font-bold mb-2">
@@ -142,6 +156,7 @@ function buildPopupHtml(alert) {
             </div>
             ${desc}
             ${link}
+            ${votesHtml}
         </div>
     `;
 }
@@ -286,13 +301,25 @@ function openReportModal() {
                             <textarea id="r-desc" class="w-full bg-surface-container-low border border-outline-variant/30 focus:border-primary rounded-xl p-3 font-body-sm text-sm text-on-surface outline-none" placeholder="Provide situational details..." rows="3"></textarea>
                         </div>
                         <div class="space-y-2">
-                            <label class="block font-label-caps text-on-surface-variant text-[9px] uppercase">Geospatial Fix</label>
+                            <div class="flex items-center justify-between">
+                                <label class="block font-label-caps text-on-surface-variant text-[9px] uppercase">Geospatial Fix</label>
+                                <div class="flex gap-2">
+                                    <button id="r-pin-center" class="px-2 py-0.5 rounded bg-primary/10 hover:bg-primary/20 text-primary text-[10px] flex items-center gap-1 font-label-caps border border-primary/20 transition-all" title="PIN_MAP_CENTER">
+                                        <span class="material-symbols-outlined text-[12px]">location_on</span>
+                                        PIN_CENTER
+                                    </button>
+                                    <button id="r-pick-map" class="px-2 py-0.5 rounded bg-primary/10 hover:bg-primary/20 text-primary text-[10px] flex items-center gap-1 font-label-caps border border-primary/20 transition-all" title="CHOOSE_ON_MAP">
+                                        <span class="material-symbols-outlined text-[12px]">ads_click</span>
+                                        PICK_MAP
+                                    </button>
+                                </div>
+                            </div>
                             <div class="grid grid-cols-2 gap-2">
                                 <input id="r-lat" type="number" step="0.000001" readonly class="bg-surface-container-low border border-outline-variant/30 rounded-xl p-2 text-xs font-data-mono text-primary outline-none" placeholder="LAT" />
                                 <input id="r-lon" type="number" step="0.000001" readonly class="bg-surface-container-low border border-outline-variant/30 rounded-xl p-2 text-xs font-data-mono text-primary outline-none" placeholder="LON" />
                             </div>
                             <input id="r-addr" type="text" class="w-full bg-surface-container-low border border-outline-variant/30 rounded-xl p-2 text-xs text-on-surface outline-none mt-2" placeholder="Street Address (Optional)" />
-                            <p class="text-[9px] text-on-surface-variant italic mt-1">Click the map while this modal is open to pick coordinates.</p>
+                            <p class="text-[9px] text-on-surface-variant italic mt-1">Click PICK_MAP to hide form and choose directly on map, or use PIN_CENTER.</p>
                         </div>
                     </div>
                 </div>
@@ -321,22 +348,86 @@ function openReportModal() {
 
     const elLat = backdrop.querySelector('#r-lat');
     const elLon = backdrop.querySelector('#r-lon');
+    let tempMarker = null;
 
     function fillFromMap(e) {
-        elLat.value = e.latlng.lat.toFixed(6);
-        elLon.value = e.latlng.lng.toFixed(6);
+        const lat = e.latlng.lat;
+        const lng = e.latlng.lng;
+        elLat.value = lat.toFixed(6);
+        elLon.value = lng.toFixed(6);
+
+        if (tempMarker) {
+            tempMarker.setLatLng([lat, lng]);
+        } else {
+            tempMarker = L.marker([lat, lng], {
+                draggable: true,
+                icon: L.divIcon({
+                    html: `
+                        <div class="relative w-8 h-8 flex items-center justify-center">
+                            <div class="absolute inset-0 bg-primary opacity-30 rounded-full animate-ping"></div>
+                            <span class="material-symbols-outlined text-primary text-[32px] drop-shadow-md">location_on</span>
+                        </div>`,
+                    className: 'bg-transparent border-none outline-none shadow-none',
+                    iconSize: [32, 32],
+                    iconAnchor: [16, 32],
+                })
+            }).addTo(map);
+
+            tempMarker.on('dragend', () => {
+                const pos = tempMarker.getLatLng();
+                elLat.value = pos.lat.toFixed(6);
+                elLon.value = pos.lng.toFixed(6);
+            });
+        }
         showToast('LOCATION_FIX_ACQUIRED');
     }
     map.on('click', fillFromMap);
 
+    backdrop.querySelector('#r-pin-center').onclick = () => {
+        const center = map.getCenter();
+        fillFromMap({ latlng: center });
+    };
+
+    backdrop.querySelector('#r-pick-map').onclick = () => {
+        backdrop.classList.add('hidden');
+        
+        const banner = document.createElement('div');
+        banner.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 bg-inverse-surface text-on-primary px-4 py-2.5 rounded-full shadow-2xl z-[9999] flex items-center gap-2 border border-primary/20 pointer-events-auto';
+        banner.innerHTML = `
+            <span class="material-symbols-outlined text-primary animate-pulse">ads_click</span>
+            <span class="text-xs font-bold font-label-caps">Click anywhere on the map to choose coordinates...</span>
+        `;
+        document.body.appendChild(banner);
+
+        const originalFillFromMap = fillFromMap;
+
+        function handleMapClick(e) {
+            originalFillFromMap(e);
+            banner.remove();
+            backdrop.classList.remove('hidden');
+            map.off('click', handleMapClick);
+            map.on('click', fillFromMap);
+        }
+
+        map.off('click', fillFromMap);
+        map.on('click', handleMapClick);
+    };
+
     function close() {
         backdrop.remove();
         map.off('click', fillFromMap);
+        if (tempMarker) {
+            map.removeLayer(tempMarker);
+        }
     }
 
     backdrop.querySelector('#r-close').onclick = close;
     backdrop.querySelector('#r-cancel').onclick = close;
     backdrop.querySelector('#r-submit').onclick = async () => {
+        if (!elLat.value.trim() || !elLon.value.trim()) {
+            showToast('GEOSPATIAL_FIX_REQUIRED');
+            return;
+        }
         const payload = {
             type: selectedType,
             severity: 3,
@@ -355,7 +446,17 @@ function openReportModal() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),
             });
-            if (!r.ok) throw new Error('TRANSMIT_FAILURE');
+            if (!r.ok) {
+                let errMsg = 'TRANSMIT_FAILURE';
+                try {
+                    const data = await r.json();
+                    if (data && data.error) {
+                        errMsg = data.error;
+                        if (data.details) errMsg += ': ' + data.details;
+                    }
+                } catch (_) {}
+                throw new Error(errMsg);
+            }
             close();
             showToast('REPORT_TRANSMITTED_SUCCESSFULLY');
         } catch (e) {
@@ -764,19 +865,147 @@ function alertLimitByPlan() {
     return 50;
 }
 
+// State for routing mode
+state.routeMode = false;
+state.routePoints = [];
+state.routeLineLayer = null;
+
 // Map interactions
 map.on('click', (e) => {
-    if (!state.subscribeMode) return;
-    state.subscribePoints.push([e.latlng.lng, e.latlng.lat]);
-    showToast(`Điểm ${state.subscribePoints.length}/2`);
-    if (state.subscribePoints.length === 2) {
-        state.subscribedBbox = bboxFromTwoPoints(state.subscribePoints[0], state.subscribePoints[1]);
-        saveSubscribedBbox(state.subscribedBbox);
-        state.subscribeMode = false;
-        drawSubscribeBbox();
-        updateSubStatus();
-        showToast('Đã thiết lập vùng theo dõi!');
+    if (state.subscribeMode) {
+        state.subscribePoints.push([e.latlng.lng, e.latlng.lat]);
+        showToast(`Điểm ${state.subscribePoints.length}/2`);
+        if (state.subscribePoints.length === 2) {
+            state.subscribedBbox = bboxFromTwoPoints(state.subscribePoints[0], state.subscribePoints[1]);
+            saveSubscribedBbox(state.subscribedBbox);
+            state.subscribeMode = false;
+            drawSubscribeBbox();
+            updateSubStatus();
+            showToast('Đã thiết lập vùng theo dõi!');
+        }
+        return;
     }
+
+    if (state.routeMode) {
+        state.routePoints.push([e.latlng.lng, e.latlng.lat]);
+        showToast(`Thêm điểm lộ trình: ${state.routePoints.length}`);
+
+        if (state.routeLineLayer) {
+            map.removeLayer(state.routeLineLayer);
+        }
+        const leafletCoords = state.routePoints.map(p => [p[1], p[0]]); // [lat, lng]
+        state.routeLineLayer = L.polyline(leafletCoords, { color: '#2563eb', weight: 4 }).addTo(map);
+
+        if (state.routePoints.length >= 2) {
+            assessCurrentRoute();
+        }
+    }
+});
+
+async function assessCurrentRoute() {
+    const el = $('route-status');
+    if (!el) return;
+    el.textContent = 'Đang phân tích rủi ro hành trình...';
+    try {
+        const response = await fetch('/api/routing/assess', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ polyline: state.routePoints, thresholdMeters: 1000 })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error);
+
+        let color = '#22c55e'; // green (safe)
+        let statusColor = 'text-green-600';
+        if (data.status === 'CAUTION') {
+            color = '#eab308'; // amber
+            statusColor = 'text-yellow-600';
+        }
+        if (data.status === 'DANGEROUS') {
+            color = '#ef4444'; // red
+            statusColor = 'text-red-600';
+        }
+
+        el.innerHTML = `Score: <span class="font-bold ${statusColor}">${data.safetyScore}%</span> (${data.status}). Gặp ${data.totalHazards} sự cố.`;
+
+        if (state.routeLineLayer) {
+            state.routeLineLayer.setStyle({ color });
+        }
+    } catch (err) {
+        el.textContent = 'Lỗi phân tích: ' + err.message;
+    }
+}
+
+window.voteAlert = async (id, type) => {
+    if (!isLoggedIn()) {
+        showToast('Vui lòng đăng nhập để thực hiện vote!');
+        return;
+    }
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        try {
+            const r = await fetch(`/api/alerts/${id}/vote`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${getToken()}`
+                },
+                body: JSON.stringify({ voteType: type, lat: latitude, lng: longitude })
+            });
+            const data = await r.json();
+            if (!r.ok) throw new Error(data.error);
+            showToast(`Vote thành công! Mức tin cậy hiện tại: ${Math.round(data.data.confidence * 100)}%`);
+            map.closePopup();
+            window.location.reload();
+        } catch (err) {
+            showToast('Lỗi vote: ' + err.message);
+        }
+    }, (err) => {
+        showToast('Vui lòng bật quyền định vị GPS để xác thực vị trí khi vote.');
+    });
+};
+
+async function loadAISituationReport() {
+    const el = $('ai-summary-text');
+    if (!el) return;
+    try {
+        const r = await fetch('/api/alerts/summary?lat=10.762622&lng=106.660172&radius=10000');
+        const data = await r.json();
+        el.textContent = data.summary || 'Khu vực ổn định.';
+    } catch (err) {
+        el.textContent = 'Không tải được báo cáo AI.';
+    }
+}
+
+$('btn-route-draw')?.addEventListener('click', () => {
+    state.routeMode = !state.routeMode;
+    const btn = $('btn-route-draw');
+    const el = $('route-status');
+    if (state.routeMode) {
+        state.routePoints = [];
+        if (state.routeLineLayer) {
+            map.removeLayer(state.routeLineLayer);
+            state.routeLineLayer = null;
+        }
+        btn.classList.add('bg-primary/30');
+        el.textContent = 'Click lên bản đồ để vẽ các điểm lộ trình.';
+        showToast('Đang bật chế độ vẽ lộ trình. Click lên bản đồ để chọn các điểm.');
+    } else {
+        btn.classList.remove('bg-primary/30');
+        el.textContent = 'Đã tắt chế độ vẽ.';
+    }
+});
+
+$('btn-route-clear')?.addEventListener('click', () => {
+    state.routePoints = [];
+    if (state.routeLineLayer) {
+        map.removeLayer(state.routeLineLayer);
+        state.routeLineLayer = null;
+    }
+    state.routeMode = false;
+    $('btn-route-draw')?.classList.remove('bg-primary/30');
+    $('route-status').textContent = 'Click Draw, click map to mark path.';
+    showToast('Đã xoá lộ trình.');
 });
 
 // ====== Boot ======
@@ -786,6 +1015,7 @@ drawSubscribeBbox();
 loadHistoryAlerts();
 loadCameras();
 renderProfileData();
+loadAISituationReport();
 
 setInterval(() => {
     const stream = $('data-stream');

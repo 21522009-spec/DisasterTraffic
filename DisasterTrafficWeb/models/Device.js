@@ -48,6 +48,18 @@ const deviceSchema = new mongoose.Schema(
             type: Boolean,
             default: true,
         },
+        // Location for geofenced push broadcasts
+        lastLocation: {
+            type: {
+                type: String,
+                enum: ['Point'],
+                default: 'Point',
+            },
+            coordinates: {
+                type: [Number], // [lng, lat]
+                default: undefined,
+            },
+        },
         // Metadata để debug
         meta: {
             type: Object,
@@ -56,6 +68,8 @@ const deviceSchema = new mongoose.Schema(
     },
     { timestamps: true }
 );
+
+deviceSchema.index({ lastLocation: '2dsphere' });
 
 const Device = mongoose.models.Device || mongoose.model('Device', deviceSchema);
 

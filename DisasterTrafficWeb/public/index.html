@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html class="dark" lang="vi">
+<html lang="vi">
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
@@ -23,53 +23,53 @@
           theme: {
             extend: {
               "colors": {
-                "inverse-surface": "#dee3e6",
-                "background": "#0e1416",
-                "surface-container-lowest": "#090f11",
-                "tertiary-fixed-dim": "#ffb95f",
-                "surface-tint": "#4cd7f6",
-                "tertiary-container": "#e79400",
-                "surface-container": "#1b2122",
-                "on-error": "#690005",
-                "on-tertiary-fixed": "#2a1700",
-                "on-surface": "#dee3e6",
-                "surface-bright": "#343a3c",
-                "primary-container": "#06b6d4",
-                "error": "#ffb4ab",
-                "outline": "#869397",
-                "on-secondary": "#68000a",
-                "on-tertiary": "#472a00",
-                "on-primary": "#003640",
-                "surface-dim": "#0e1416",
-                "surface-container-low": "#171d1e",
-                "primary-fixed-dim": "#4cd7f6",
-                "tertiary": "#ffb95f",
-                "on-secondary-fixed-variant": "#930013",
-                "secondary-container": "#a40217",
-                "on-primary-fixed-variant": "#004e5c",
-                "on-error-container": "#ffdad6",
-                "tertiary-fixed": "#ffddb8",
-                "primary-fixed": "#acedff",
-                "surface": "#0e1416",
-                "on-secondary-fixed": "#410004",
-                "on-primary-fixed": "#001f26",
-                "error-container": "#93000a",
-                "surface-variant": "#303638",
-                "on-tertiary-fixed-variant": "#653e00",
-                "on-secondary-container": "#ffaea8",
-                "secondary-fixed": "#ffdad7",
-                "primary": "#4cd7f6",
-                "outline-variant": "#3d494c",
-                "on-primary-container": "#00424f",
-                "surface-container-high": "#252b2d",
-                "secondary-fixed-dim": "#ffb3ad",
-                "surface-container-highest": "#303638",
-                "secondary": "#ffb3ad",
-                "on-surface-variant": "#bcc9cd",
-                "inverse-primary": "#00687a",
-                "on-background": "#dee3e6",
-                "inverse-on-surface": "#2b3133",
-                "on-tertiary-container": "#563400"
+                "inverse-surface": "#0f172a",
+                "background": "#f8fafc",
+                "surface-container-lowest": "#ffffff",
+                "tertiary-fixed-dim": "#f59e0b",
+                "surface-tint": "#2563eb",
+                "tertiary-container": "#fef3c7",
+                "surface-container": "#f8fafc",
+                "on-error": "#ffffff",
+                "on-tertiary-fixed": "#78350f",
+                "on-surface": "#0f172a",
+                "surface-bright": "#ffffff",
+                "primary-container": "#dbeafe",
+                "error": "#dc2626",
+                "outline": "#94a3b8",
+                "on-secondary": "#ffffff",
+                "on-tertiary": "#ffffff",
+                "on-primary": "#ffffff",
+                "surface-dim": "#f1f5f9",
+                "surface-container-low": "#f1f5f9",
+                "primary-fixed-dim": "#93c5fd",
+                "tertiary": "#ca8a04",
+                "on-secondary-fixed-variant": "#7f1d1d",
+                "secondary-container": "#fee2e2",
+                "on-primary-fixed-variant": "#1e3a8a",
+                "on-error-container": "#7f1d1d",
+                "tertiary-fixed": "#fef3c7",
+                "primary-fixed": "#dbeafe",
+                "surface": "#ffffff",
+                "on-secondary-fixed": "#7f1d1d",
+                "on-primary-fixed": "#1e3a8a",
+                "error-container": "#fee2e2",
+                "surface-variant": "#f1f5f9",
+                "on-tertiary-fixed-variant": "#78350f",
+                "on-secondary-container": "#7f1d1d",
+                "secondary-fixed": "#fee2e2",
+                "primary": "#2563eb",
+                "outline-variant": "#e2e8f0",
+                "on-primary-container": "#1e40af",
+                "surface-container-high": "#e2e8f0",
+                "secondary-fixed-dim": "#fca5a5",
+                "surface-container-highest": "#cbd5e1",
+                "secondary": "#dc2626",
+                "on-surface-variant": "#475569",
+                "inverse-primary": "#3b82f6",
+                "on-background": "#0f172a",
+                "inverse-on-surface": "#f8fafc",
+                "on-tertiary-container": "#78350f"
               },
               "borderRadius": {
                 "DEFAULT": "0.25rem",
@@ -111,12 +111,13 @@
     
     <style>
         .glass-panel {
-          background: rgba(17, 24, 39, 0.6);
-          backdrop-filter: blur(20px);
-          border: 1px solid rgba(76, 215, 246, 0.1);
+          background: rgba(255, 255, 255, 0.85);
+          backdrop-filter: blur(16px);
+          border: 1px solid rgba(37, 99, 235, 0.08);
+          box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.05);
         }
         .scan-line {
-          background: linear-gradient(to bottom, transparent 50%, rgba(76, 215, 246, 0.03) 50%);
+          background: linear-gradient(to bottom, transparent 50%, rgba(37, 99, 235, 0.01) 50%);
           background-size: 100% 4px;
           pointer-events: none;
         }
@@ -130,7 +131,7 @@
         #map {
           width: 100%;
           height: 100%;
-          background: #0e1416;
+          background: #f8fafc;
         }
         .custom-scrollbar::-webkit-scrollbar {
           width: 4px;
@@ -139,60 +140,60 @@
           background: transparent;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: rgba(76, 215, 246, 0.2);
+          background: rgba(37, 99, 235, 0.15);
           border-radius: 10px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: rgba(76, 215, 246, 0.4);
+          background: rgba(37, 99, 235, 0.3);
         }
 
-        .leaflet-container { background: #0e1416 !important; }
-        .leaflet-bar a { background-color: #1b2122 !important; color: #4cd7f6 !important; border-bottom: 1px solid #3d494c !important; }
-        .leaflet-popup-content-wrapper { background: #1b2122 !important; color: #dee3e6 !important; border: 1px solid #3d494c !important; border-radius: 12px !important; }
-        .leaflet-popup-tip { background: #1b2122 !important; }
+        .leaflet-container { background: #f8fafc !important; }
+        .leaflet-bar a { background-color: #ffffff !important; color: #2563eb !important; border-bottom: 1px solid #e2e8f0 !important; }
+        .leaflet-popup-content-wrapper { background: #ffffff !important; color: #0f172a !important; border: 1px solid #e2e8f0 !important; border-radius: 12px !important; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1) !important; }
+        .leaflet-popup-tip { background: #ffffff !important; }
 
         .toast {
             position: fixed; right: 24px; bottom: 100px; max-width: 360px;
-            padding: 12px 16px; border-radius: 12px; border: 1px solid rgba(76, 215, 246, 0.2);
-            background: rgba(17, 24, 39, 0.8); backdrop-filter: blur(10px);
-            color: #dee3e6; font-size: 13px; z-index: 1000;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            padding: 12px 16px; border-radius: 12px; border: 1px solid rgba(37, 99, 235, 0.1);
+            background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px);
+            color: #0f172a; font-size: 13px; z-index: 1000;
+            box-shadow: 0 10px 30px -5px rgba(0,0,0,0.08);
         }
         .hidden { display: none; }
 
         .modal-backdrop {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+            position: fixed; inset: 0; background: rgba(15, 23, 42, 0.3);
             display: flex; align-items: center; justify-content: center; z-index: 1100;
             backdrop-filter: blur(4px);
         }
         .modal {
             width: min(520px, calc(100% - 28px)); 
-            background: #1b2122; border-radius: 20px;
-            border: 1px solid rgba(76, 215, 246, 0.1); padding: 24px; 
-            box-shadow: 0 24px 64px rgba(0,0,0,0.6);
-            color: #dee3e6;
+            background: #ffffff; border-radius: 20px;
+            border: 1px solid rgba(37, 99, 235, 0.08); padding: 24px; 
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15);
+            color: #0f172a;
         }
-        .modal h3 { margin: 0 0 16px 0; font-size: 20px; font-weight: 700; color: #4cd7f6; font-family: 'Space Grotesk'; }
+        .modal h3 { margin: 0 0 16px 0; font-size: 20px; font-weight: 700; color: #2563eb; font-family: 'Space Grotesk'; }
         .modal .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
         .modal input, .modal select, .modal textarea {
             width: 100%; padding: 10px 14px; border-radius: 12px; 
-            background: #0e1416; border: 1px solid #3d494c; color: #dee3e6;
+            background: #f8fafc; border: 1px solid #e2e8f0; color: #0f172a;
             font-size: 14px; outline: none; transition: border-color 0.2s;
         }
         .modal input:focus, .modal select:focus, .modal textarea:focus {
-            border-color: #4cd7f6;
+            border-color: #2563eb;
         }
         .modal textarea { min-height: 100px; resize: vertical; }
         .modal .actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; }
 
         .circular-slider {
             width: 160px; height: 160px; border-radius: 50%;
-            background: conic-gradient(from 180deg, #4cd7f6 270deg, #1b2122 0deg);
+            background: conic-gradient(from 180deg, #2563eb 270deg, #f1f5f9 0deg);
             display: flex; align-items: center; justify-content: center; position: relative;
         }
         .circular-slider::before {
             content: ''; position: absolute; width: 140px; height: 140px;
-            background: #0e1416; border-radius: 50%;
+            background: #ffffff; border-radius: 50%;
         }
     </style>
 </head>
@@ -200,7 +201,7 @@
 <body class="bg-background text-on-surface font-body-md overflow-hidden h-screen select-none">
     
     <!-- TopAppBar Component -->
-    <header class="fixed top-0 w-full rounded-b-xl bg-surface/60 backdrop-blur-xl text-primary border-b border-outline-variant/10 shadow-[0_0_15px_rgba(76,215,246,0.1)] flex items-center justify-between px-margin-mobile h-16 z-[100]">
+    <header class="fixed top-0 w-full rounded-b-xl bg-surface/60 backdrop-blur-xl text-primary border-b border-outline-variant/10 shadow-[0_0_15px_rgba(76,215,246,0.1)] flex items-center justify-between px-margin-mobile h-16 z-[1100]">
         <div class="flex items-center gap-3">
             <span class="material-symbols-outlined text-primary">sensors</span>
             <h1 class="font-headline-md text-headline-md font-bold text-primary tracking-tight">DisasterTraffic</h1>
@@ -232,7 +233,7 @@
     </header>
 
     <!-- Side Navigation (Drawer style) -->
-    <aside class="fixed left-0 top-16 h-full w-14 hover:w-64 group transition-all duration-300 z-[90] glass-panel border-r border-outline-variant/20 overflow-hidden">
+    <aside class="fixed left-0 top-16 h-full w-14 hover:w-64 group transition-all duration-300 z-[1050] glass-panel border-r border-outline-variant/20 overflow-hidden">
         <div class="flex flex-col h-full py-6">
             <div class="px-3 mb-8 flex items-center gap-4">
                 <div class="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0 border border-primary/30">
@@ -282,7 +283,7 @@
         <div id="view-map" class="view h-full relative">
             <div id="map"></div>
             <!-- UI Overlays for Map -->
-            <aside class="fixed left-20 top-24 bottom-24 w-80 glass-panel rounded-xl overflow-hidden flex flex-col z-40 border-r border-outline-variant/20 shadow-2xl">
+            <aside class="fixed left-20 top-24 bottom-24 w-80 glass-panel rounded-xl overflow-hidden flex flex-col z-[1000] border-r border-outline-variant/20 shadow-2xl">
                 <div class="p-panel-padding border-b border-outline-variant/20 bg-surface-container-high/40">
                     <div class="flex items-center justify-between mb-2">
                         <h2 class="font-headline-md text-headline-md text-on-surface">Live Alert Feed</h2>
@@ -308,10 +309,18 @@
                         <span class="text-[10px] font-bold text-on-surface-variant uppercase">Khác</span>
                     </label>
                 </div>
+                <!-- AI Report Box -->
+                <div id="ai-summary-box" class="p-4 mx-4 mb-2 rounded-xl bg-primary/5 border border-primary/20">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="material-symbols-outlined text-primary text-lg">smart_toy</span>
+                        <span class="font-label-caps text-[10px] text-primary uppercase font-bold">GenAI Area SitRep</span>
+                    </div>
+                    <p id="ai-summary-text" class="text-xs text-on-surface-variant leading-relaxed">Đang phân tích tình hình khu vực...</p>
+                </div>
                 <div id="alert-list" class="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar"></div>
             </aside>
 
-            <div class="fixed right-6 top-24 bottom-24 flex flex-col gap-6 z-40 items-end pointer-events-none">
+            <div class="fixed right-6 top-24 bottom-24 flex flex-col gap-6 z-[1000] items-end pointer-events-none">
                 <div class="pointer-events-auto w-80 glass-panel rounded-xl p-4 space-y-3 border border-outline-variant/20 shadow-xl">
                      <h3 class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest text-[10px]">Regional Protocol</h3>
                      <div class="flex gap-2">
@@ -319,6 +328,15 @@
                          <button id="btn-clear-subscribe" class="px-3 py-2 bg-surface-container text-[10px] font-bold uppercase rounded border border-outline-variant/20 hover:bg-surface-bright transition-all">Clear</button>
                      </div>
                      <p id="sub-status" class="text-[10px] text-on-surface-variant italic">Protocol inactive.</p>
+
+                     <div class="w-full h-px bg-outline-variant/20 my-2"></div>
+
+                     <h3 class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest text-[10px]">Route Risk Guard</h3>
+                     <div class="flex gap-2">
+                          <button id="btn-route-draw" class="flex-1 py-2 bg-primary/10 hover:bg-primary/20 text-primary text-[10px] font-bold uppercase rounded border border-primary/20 transition-all">Draw Route</button>
+                          <button id="btn-route-clear" class="px-3 py-2 bg-surface-container text-[10px] font-bold uppercase rounded border border-outline-variant/20 hover:bg-surface-bright transition-all">Clear</button>
+                     </div>
+                     <p id="route-status" class="text-[10px] text-on-surface-variant italic">Click Draw, click map to mark path.</p>
                 </div>
                 <div class="mt-auto pointer-events-auto">
                     <button id="btn-add-report" class="flex items-center gap-3 bg-secondary-container text-on-secondary-container px-6 py-4 rounded-xl shadow-2xl hover:scale-105 transition-all duration-300 group border border-on-secondary-container/20">

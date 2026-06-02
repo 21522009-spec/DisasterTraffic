@@ -84,7 +84,7 @@ async function fetchFromTomTom(apiKey) {
             key: apiKey,
             bbox: `${minLng},${minLat},${maxLng},${maxLat}`,
             fields,
-            language: 'vi-VN',
+            language: 'en-US',
             t: 1111,
             categoryFilter,
         },
@@ -183,39 +183,47 @@ async function upsertAlerts(io, alerts) {
     return { inserted, updated };
 }
 
+async function runCrawler(io) {
+    console.log('[crawler] Đang thu thập dữ liệu thiên tai...');
+    const TOMTOM_KEY = (process.env.TOMTOM_KEY || '').trim();
+
+    const [eonetResult, tomtomResult] = await Promise.allSettled([
+        fetchFromEONET(),
+        fetchFromTomTom(TOMTOM_KEY),
+    ]);
+
+    if (eonetResult.status === 'rejected') {
+        console.error('[crawler] EONET lỗi:', eonetResult.reason?.message);
+    }
+    if (tomtomResult.status === 'rejected') {
+        console.error('[crawler] TomTom lỗi:', tomtomResult.reason?.message);
+    }
+
+    const events = [
+        ...(eonetResult.status === 'fulfilled' ? eonetResult.value : []),
+        ...(tomtomResult.status === 'fulfilled' ? tomtomResult.value : []),
+    ];
+
+    if (events.length === 0) {
+        console.log('[crawler] Không có sự kiện mới trong khu vực.');
+        return;
+    }
+
+    try {
+        const { inserted, updated } = await upsertAlerts(io, events);
+        console.log(`[crawler] Hoàn tất: +${inserted} mới, ${updated} cập nhật (tổng ${events.length})`);
+    } catch (error) {
+        console.error('[crawler] Lỗi khi lưu dữ liệu:', error);
+    }
+}
+
 export const initCrawler = (io) => {
-    cron.schedule('*/30 * * * *', async () => {
-        console.log('[crawler] Đang thu thập dữ liệu thiên tai...');
-        const TOMTOM_KEY = (process.env.TOMTOM_KEY || '').trim();
+    // Chạy ngay lập tức khi start server
+    runCrawler(io).catch((err) => console.error('[crawler] Lỗi chạy khởi động:', err));
 
-        const [eonetResult, tomtomResult] = await Promise.allSettled([
-            fetchFromEONET(),
-            fetchFromTomTom(TOMTOM_KEY),
-        ]);
-
-        if (eonetResult.status === 'rejected') {
-            console.error('[crawler] EONET lỗi:', eonetResult.reason?.message);
-        }
-        if (tomtomResult.status === 'rejected') {
-            console.error('[crawler] TomTom lỗi:', tomtomResult.reason?.message);
-        }
-
-        const events = [
-            ...(eonetResult.status === 'fulfilled' ? eonetResult.value : []),
-            ...(tomtomResult.status === 'fulfilled' ? tomtomResult.value : []),
-        ];
-
-        if (events.length === 0) {
-            console.log('[crawler] Không có sự kiện mới trong khu vực.');
-            return;
-        }
-
-        try {
-            const { inserted, updated } = await upsertAlerts(io, events);
-            console.log(`[crawler] Hoàn tất: +${inserted} mới, ${updated} cập nhật (tổng ${events.length})`);
-        } catch (error) {
-            console.error('[crawler] Lỗi khi lưu dữ liệu:', error);
-        }
+    // Lên lịch chạy mỗi 30 phút
+    cron.schedule('*/30 * * * *', () => {
+        runCrawler(io).catch((err) => console.error('[crawler] Lỗi chạy theo lịch:', err));
     });
 };
 

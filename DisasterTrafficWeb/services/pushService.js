@@ -74,7 +74,39 @@ export async function sendAlertPush(alert) {
     if (!alert) return { sent: 0, errors: 0 };
 
     try {
-        const devices = await Device.find({ active: true }).lean();
+        // Query active devices that are either within 5km of the alert or have no location set yet
+        const [nearDevices, noLocationDevices] = await Promise.all([
+            Device.find({
+                active: true,
+                lastLocation: {
+                    $nearSphere: {
+                        $geometry: {
+                            type: 'Point',
+                            coordinates: [alert.lng, alert.lat]
+                        },
+                        $maxDistance: 5000 // 5km geofence
+                    }
+                }
+            }).lean(),
+            Device.find({
+                active: true,
+                $or: [
+                    { lastLocation: { $exists: false } },
+                    { lastLocation: null }
+                ]
+            }).lean()
+        ]);
+
+        const deviceIds = new Set();
+        const devices = [];
+        for (const d of [...nearDevices, ...noLocationDevices]) {
+            const idStr = String(d._id);
+            if (!deviceIds.has(idStr)) {
+                deviceIds.add(idStr);
+                devices.push(d);
+            }
+        }
+
         if (devices.length === 0) return { sent: 0, errors: 0 };
 
         // Filter
