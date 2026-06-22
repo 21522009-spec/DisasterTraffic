@@ -1,0 +1,263 @@
+/*
+ * theme.css v2 — Dark / Light mode với slider toggle trong navbar
+ * Thêm vào <head> SAU tailwind config, TRƯỚC </head>:
+ *   <link rel="stylesheet" href="/theme.css">
+ */
+
+/* ════════════════════════════════════════
+   CSS VARIABLES — DARK (default)
+   ════════════════════════════════════════ */
+:root {
+  --bg-base:           #141d20;
+  --bg-surface:        #1b2526;
+  --bg-surface-low:    #18272b;
+  --bg-surface-mid:    #1e2f34;
+  --bg-surface-high:   #243640;
+  --bg-panel:          rgba(28, 40, 44, 0.82);
+  --bg-header:         rgba(20, 29, 32, 0.88);
+  --bg-sidebar:        rgba(22, 32, 36, 0.88);
+  --bg-modal:          #1e2d31;
+  --bg-alert-card:     rgba(30, 44, 48, 0.85);
+  --bg-input:          #18272b;
+  --bg-toast:          rgba(26, 38, 42, 0.95);
+
+  --text-primary:      #4cd7f6;
+  --text-on-surface:   #e8edf0;
+  --text-variant:      #a8b8bd;
+  --text-muted:        #6b7e84;
+
+  --border-base:       rgba(61, 73, 76, 0.55);
+  --border-primary:    rgba(76, 215, 246, 0.18);
+  --border-modal:      rgba(76, 215, 246, 0.2);
+
+  --accent-primary:    #4cd7f6;
+  --accent-error:      #ffb4ab;
+  --accent-tertiary:   #ffb95f;
+
+  --map-opacity:       0.88;
+  --scanline-opacity:  0.06;
+  --vignette-opacity:  0.55;
+  --panel-blur:        20px;
+
+  /* Toggle slider */
+  --toggle-track-bg:   #0e1a1e;
+  --toggle-track-border: rgba(76, 215, 246, 0.35);
+  --toggle-thumb-bg:   #4cd7f6;
+  --toggle-thumb-x:    2px;
+  --toggle-icon-sun:   1;
+  --toggle-icon-moon:  0.3;
+}
+
+/* ════════════════════════════════════════
+   CSS VARIABLES — LIGHT
+   ════════════════════════════════════════ */
+html.light {
+  --bg-base:           #eef4f6;
+  --bg-surface:        #ffffff;
+  --bg-surface-low:    #f0f6f8;
+  --bg-surface-mid:    #e4eef1;
+  --bg-surface-high:   #d8eaee;
+  --bg-panel:          rgba(255, 255, 255, 0.88);
+  --bg-header:         rgba(230, 242, 246, 0.92);
+  --bg-sidebar:        rgba(240, 248, 251, 0.95);
+  --bg-modal:          #ffffff;
+  --bg-alert-card:     rgba(240, 248, 251, 0.95);
+  --bg-input:          #f0f6f8;
+  --bg-toast:          rgba(255, 255, 255, 0.96);
+
+  --text-primary:      #006d8a;
+  --text-on-surface:   #0e2428;
+  --text-variant:      #2a4a52;
+  --text-muted:        #4a6870;
+
+  --border-base:       rgba(0, 100, 130, 0.18);
+  --border-primary:    rgba(0, 109, 138, 0.28);
+  --border-modal:      rgba(0, 109, 138, 0.3);
+
+  --accent-primary:    #006d8a;
+  --accent-error:      #c0392b;
+  --accent-tertiary:   #b06a00;
+
+  --map-opacity:       1;
+  --scanline-opacity:  0;
+  --vignette-opacity:  0.06;
+  --panel-blur:        16px;
+
+  /* Toggle slider — ngược lại */
+  --toggle-track-bg:   #b8dde8;
+  --toggle-track-border: rgba(0, 109, 138, 0.4);
+  --toggle-thumb-bg:   #006d8a;
+  --toggle-thumb-x:    22px;
+  --toggle-icon-sun:   0.3;
+  --toggle-icon-moon:  1;
+}
+
+/* ════════════════════════════════════════
+   ÁP DỤNG VARIABLES
+   ════════════════════════════════════════ */
+body, .bg-background { background-color: var(--bg-base) !important; }
+#view-intel, #view-cctv, #view-profile { background: var(--bg-base) !important; }
+
+header.fixed {
+  background: var(--bg-header) !important;
+  border-bottom-color: var(--border-base) !important;
+}
+aside.fixed.left-0 {
+  background: var(--bg-sidebar) !important;
+  border-right-color: var(--border-primary) !important;
+}
+.glass-panel {
+  background: var(--bg-panel) !important;
+  backdrop-filter: blur(var(--panel-blur)) !important;
+  border-color: var(--border-primary) !important;
+}
+aside.fixed.left-20        { background: var(--bg-sidebar) !important; }
+aside.fixed.left-20 .border-b { background: var(--bg-surface-mid) !important; }
+.fixed.right-6 .glass-panel { background: var(--bg-panel) !important; }
+
+#alert-list > div {
+  background: var(--bg-alert-card) !important;
+  border-color: var(--border-base) !important;
+}
+#alert-list > div:hover { border-color: var(--border-primary) !important; }
+
+.text-on-surface          { color: var(--text-on-surface) !important; }
+.text-on-surface-variant  { color: var(--text-variant) !important; }
+.text-on-background       { color: var(--text-on-surface) !important; }
+.text-primary             { color: var(--text-primary) !important; }
+
+html.light .text-gray-500,
+html.light .text-gray-400 { color: var(--text-variant) !important; }
+
+.bg-surface-container\/40      { background: var(--bg-surface-mid) !important; }
+.bg-surface-container-lowest   { background-color: var(--bg-base) !important; }
+.bg-surface-container-low      { background-color: var(--bg-surface-low) !important; }
+.bg-surface-container          { background-color: var(--bg-surface-mid) !important; }
+.bg-surface-container-high     { background-color: var(--bg-surface-high) !important; }
+.bg-surface-container-highest  { background-color: var(--bg-surface-high) !important; }
+
+.modal {
+  background: var(--bg-modal) !important;
+  border-color: var(--border-modal) !important;
+  color: var(--text-on-surface) !important;
+}
+.modal-backdrop { background: rgba(0,0,0,0.5) !important; }
+.modal h3       { color: var(--accent-primary) !important; }
+.modal input, .modal select, .modal textarea {
+  background: var(--bg-input) !important;
+  border-color: var(--border-base) !important;
+  color: var(--text-on-surface) !important;
+}
+.modal input:focus, .modal select:focus, .modal textarea:focus {
+  border-color: var(--accent-primary) !important;
+}
+
+.toast {
+  background: var(--bg-toast) !important;
+  border-color: var(--border-primary) !important;
+  color: var(--text-on-surface) !important;
+}
+
+.leaflet-popup-content-wrapper {
+  background: var(--bg-modal) !important;
+  border-color: var(--border-base) !important;
+  color: var(--text-on-surface) !important;
+}
+.leaflet-popup-tip  { background: var(--bg-modal) !important; }
+.leaflet-tile-pane  { opacity: var(--map-opacity) !important; }
+html.light .leaflet-bar a {
+  background-color: #fff !important;
+  color: var(--accent-primary) !important;
+  border-bottom-color: var(--border-base) !important;
+}
+
+.scan-line { opacity: var(--scanline-opacity) !important; }
+.fixed.inset-0.pointer-events-none.bg-\[radial-gradient\(circle_at_center\,transparent_0\%\,rgba\(0\,0\,0\,0\.4\)_100\%\)\] {
+  opacity: var(--vignette-opacity) !important;
+}
+.nav-item.text-primary.bg-primary\/10 {
+  background: color-mix(in srgb, var(--accent-primary) 14%, transparent) !important;
+}
+html.light .glass-panel {
+  box-shadow: 0 4px 20px rgba(0,100,130,0.07);
+}
+
+/* ════════════════════════════════════════
+   TOGGLE SLIDER — nằm trong navbar
+   ════════════════════════════════════════ */
+#theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+/* Icon mặt trời */
+#theme-toggle .t-sun {
+  font-size: 13px;
+  line-height: 1;
+  opacity: var(--toggle-icon-sun);
+  transition: opacity 0.35s ease;
+}
+/* Icon mặt trăng */
+#theme-toggle .t-moon {
+  font-size: 13px;
+  line-height: 1;
+  opacity: var(--toggle-icon-moon);
+  transition: opacity 0.35s ease;
+}
+
+/* Track */
+#theme-toggle .t-track {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--toggle-track-bg);
+  border: 1.5px solid var(--toggle-track-border);
+  transition: background 0.35s ease, border-color 0.35s ease;
+  flex-shrink: 0;
+}
+
+/* Thumb (viên tròn kéo qua lại) */
+#theme-toggle .t-thumb {
+  position: absolute;
+  top: 2px;
+  left: var(--toggle-thumb-x);
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--toggle-thumb-bg);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.35);
+  transition:
+    left 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+    background 0.35s ease,
+    box-shadow 0.3s ease;
+}
+
+html.light #theme-toggle .t-thumb {
+  box-shadow: 0 1px 6px rgba(0, 109, 138, 0.4);
+}
+
+#theme-toggle:hover .t-track {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--accent-primary) 30%, transparent);
+}
+
+/* ════════════════════════════════════════
+   SMOOTH TRANSITIONS TOÀN TRANG
+   ════════════════════════════════════════ */
+*, *::before, *::after {
+  transition:
+    background-color 0.28s ease,
+    border-color 0.28s ease,
+    color 0.2s ease,
+    box-shadow 0.28s ease,
+    opacity 0.2s ease;
+}
+/* Không animate transform của Leaflet markers */
+.leaflet-marker-icon,
+.leaflet-marker-shadow,
+.leaflet-tile { transition: opacity 0.28s ease !important; }
