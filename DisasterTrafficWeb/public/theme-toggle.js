@@ -1,9 +1,10 @@
 /**
- * theme-toggle.js v2
+ * theme-toggle.js v3
  * Thêm vào <head> TRƯỚC mọi script khác (tránh flash):
  *   <script src="/theme-toggle.js"></script>
  *
- * Inject slider toggle vào navbar (trong #auth-bar hoặc trước #connection-status).
+ * Inject nút tròn toggle vào navbar (trước #connection-status).
+ * Dùng Material Symbols Outlined (đã có sẵn trong dự án).
  */
 (function () {
   const STORAGE_KEY = 'dt_theme';
@@ -24,21 +25,20 @@
 
   applyTheme(getSaved() || 'dark');
 
-  /* ── 2. Tạo slider toggle HTML ── */
+  /* ── 2. Tạo nút tròn với icon Material Symbols bên trong ── */
   function createToggle() {
-    const wrap = document.createElement('div');
-    wrap.id = 'theme-toggle';
-    wrap.setAttribute('role', 'switch');
-    wrap.setAttribute('aria-label', 'Toggle dark/light mode');
-    wrap.setAttribute('tabindex', '0');
-    wrap.innerHTML = `
-      <span class="t-sun" aria-hidden="true">☀️</span>
-      <div class="t-track">
-        <div class="t-thumb"></div>
-      </div>
-      <span class="t-moon" aria-hidden="true">🌙</span>
-    `;
-    return wrap;
+    const btn = document.createElement('button');
+    btn.id = 'theme-toggle';
+    btn.setAttribute('aria-label', 'Toggle dark/light mode');
+    btn.type = 'button';
+
+    const icon = document.createElement('span');
+    icon.className = 'material-symbols-outlined';
+    icon.setAttribute('aria-hidden', 'true');
+    icon.textContent = html.classList.contains('light') ? 'light_mode' : 'dark_mode';
+
+    btn.appendChild(icon);
+    return btn;
   }
 
   /* ── 3. Inject vào navbar ── */
@@ -47,14 +47,16 @@
 
     const toggle = createToggle();
 
-    // Hàm toggle thực sự
     function doToggle() {
       const isLight = html.classList.contains('light');
       const next = isLight ? 'dark' : 'light';
       applyTheme(next);
       save(next);
 
-      // Toast ngắn
+      /* Đổi icon theo theme mới */
+      const icon = toggle.querySelector('span.material-symbols-outlined');
+      icon.textContent = next === 'light' ? 'light_mode' : 'dark_mode';
+
       const toast = document.getElementById('toast');
       if (toast) {
         toast.textContent = next === 'light' ? 'LIGHT_MODE' : 'DARK_MODE';
@@ -69,18 +71,15 @@
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); doToggle(); }
     });
 
-    // Tìm điểm inject: ngay trước #connection-status trong header
+    /* Inject ngay trước #connection-status trong header */
     const connStatus = document.getElementById('connection-status');
     if (connStatus) {
-      // Thêm separator + toggle vào flex container của header
       const sep = document.createElement('div');
       sep.className = 'w-px h-4 bg-outline-variant/30 hidden md:block';
-
-      const headerFlex = connStatus.parentElement; // div.flex.items-center.gap-4
+      const headerFlex = connStatus.parentElement;
       headerFlex.insertBefore(sep, connStatus);
       headerFlex.insertBefore(toggle, sep);
     } else {
-      // Fallback: thêm vào cuối body
       document.body.appendChild(toggle);
     }
   }

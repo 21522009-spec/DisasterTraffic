@@ -1,5 +1,5 @@
 /*
- * theme.css v2 — Dark / Light mode với slider toggle trong navbar
+ * theme.css v3 — Dark / Light mode với nút tròn icon trong navbar
  * Thêm vào <head> SAU tailwind config, TRƯỚC </head>:
  *   <link rel="stylesheet" href="/theme.css">
  */
@@ -39,13 +39,10 @@
   --vignette-opacity:  0.55;
   --panel-blur:        20px;
 
-  /* Toggle slider */
-  --toggle-track-bg:   #0e1a1e;
-  --toggle-track-border: rgba(76, 215, 246, 0.35);
-  --toggle-thumb-bg:   #4cd7f6;
-  --toggle-thumb-x:    2px;
-  --toggle-icon-sun:   1;
-  --toggle-icon-moon:  0.3;
+  /* Toggle button */
+  --toggle-btn-bg:     #141d20;
+  --toggle-btn-border: rgba(76, 215, 246, 0.35);
+  --toggle-icon-color: #4cd7f6;
 }
 
 /* ════════════════════════════════════════
@@ -83,13 +80,10 @@ html.light {
   --vignette-opacity:  0.06;
   --panel-blur:        16px;
 
-  /* Toggle slider — ngược lại */
-  --toggle-track-bg:   #b8dde8;
-  --toggle-track-border: rgba(0, 109, 138, 0.4);
-  --toggle-thumb-bg:   #006d8a;
-  --toggle-thumb-x:    22px;
-  --toggle-icon-sun:   0.3;
-  --toggle-icon-moon:  1;
+  /* Toggle button — light */
+  --toggle-btn-bg:     #eef4f6;
+  --toggle-btn-border: rgba(0, 109, 138, 0.4);
+  --toggle-icon-color: #006d8a;
 }
 
 /* ════════════════════════════════════════
@@ -183,67 +177,42 @@ html.light .glass-panel {
 }
 
 /* ════════════════════════════════════════
-   TOGGLE SLIDER — nằm trong navbar
+   TOGGLE BUTTON — nút tròn trong navbar
    ════════════════════════════════════════ */
 #theme-toggle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--toggle-btn-bg);
+  border: 1.5px solid var(--toggle-btn-border);
   display: flex;
   align-items: center;
-  gap: 7px;
+  justify-content: center;
   cursor: pointer;
-  user-select: none;
   flex-shrink: 0;
-}
-
-/* Icon mặt trời */
-#theme-toggle .t-sun {
-  font-size: 13px;
-  line-height: 1;
-  opacity: var(--toggle-icon-sun);
-  transition: opacity 0.35s ease;
-}
-/* Icon mặt trăng */
-#theme-toggle .t-moon {
-  font-size: 13px;
-  line-height: 1;
-  opacity: var(--toggle-icon-moon);
-  transition: opacity 0.35s ease;
-}
-
-/* Track */
-#theme-toggle .t-track {
-  position: relative;
-  width: 44px;
-  height: 24px;
-  border-radius: 999px;
-  background: var(--toggle-track-bg);
-  border: 1.5px solid var(--toggle-track-border);
-  transition: background 0.35s ease, border-color 0.35s ease;
-  flex-shrink: 0;
-}
-
-/* Thumb (viên tròn kéo qua lại) */
-#theme-toggle .t-thumb {
-  position: absolute;
-  top: 2px;
-  left: var(--toggle-thumb-x);
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--toggle-thumb-bg);
-  box-shadow: 0 1px 4px rgba(0,0,0,0.35);
+  padding: 0;
   transition:
-    left 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
     background 0.35s ease,
+    border-color 0.35s ease,
     box-shadow 0.3s ease;
 }
 
-html.light #theme-toggle .t-thumb {
-  box-shadow: 0 1px 6px rgba(0, 109, 138, 0.4);
+#theme-toggle .material-symbols-outlined {
+  font-size: 18px;
+  color: var(--toggle-icon-color);
+  font-variation-settings: 'FILL' 0, 'wght' 300;
+  transition: color 0.3s ease;
+  user-select: none;
 }
 
-#theme-toggle:hover .t-track {
+#theme-toggle:hover {
   border-color: var(--accent-primary);
   box-shadow: 0 0 8px color-mix(in srgb, var(--accent-primary) 30%, transparent);
+}
+
+#theme-toggle:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
 }
 
 /* ════════════════════════════════════════
