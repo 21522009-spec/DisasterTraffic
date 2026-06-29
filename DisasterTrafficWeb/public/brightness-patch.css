@@ -35,19 +35,23 @@ header.fixed {
 .text-on-surface {
   color: #e8edf0 !important;
 }
+
 .text-on-surface-variant {
-  color: #a8b8bd !important;   /* +15% lightness vs gốc #8a9ca2 */
+  color: #a8b8bd !important;
+  /* +15% lightness vs gốc #8a9ca2 */
 }
+
 .text-on-background {
   color: #e8edf0 !important;
 }
 
 /* ── 6. Alert list item cards: sáng panel nền ── */
-#alert-list > div {
+#alert-list>div {
   background: rgba(30, 44, 48, 0.85) !important;
   border-color: rgba(61, 73, 76, 0.55) !important;
 }
-#alert-list > div:hover {
+
+#alert-list>div:hover {
   border-color: rgba(76, 215, 246, 0.35) !important;
 }
 
@@ -55,6 +59,7 @@ header.fixed {
 aside.fixed.left-20 {
   background: rgba(22, 32, 36, 0.88) !important;
 }
+
 aside.fixed.left-20 .border-b {
   background: rgba(30, 42, 46, 0.7) !important;
 }
@@ -69,6 +74,7 @@ aside.fixed.left-20 .border-b {
   background: #1e2d31 !important;
   border-color: rgba(76, 215, 246, 0.2) !important;
 }
+
 .modal-backdrop {
   background: rgba(0, 0, 0, 0.6) !important;
 }
@@ -85,10 +91,21 @@ aside.fixed.left-20 .border-b {
 }
 
 /* ── 12. Surface container variants: tất cả sáng hơn ── */
-.bg-surface-container-low    { background-color: #18272b !important; }
-.bg-surface-container        { background-color: #1e2f34 !important; }
-.bg-surface-container-high   { background-color: #243640 !important; }
-.bg-surface-container-highest{ background-color: #2c3f44 !important; }
+.bg-surface-container-low {
+  background-color: #18272b !important;
+}
+
+.bg-surface-container {
+  background-color: #1e2f34 !important;
+}
+
+.bg-surface-container-high {
+  background-color: #243640 !important;
+}
+
+.bg-surface-container-highest {
+  background-color: #2c3f44 !important;
+}
 
 /* ── 13. Input fields trong modal ── */
 .modal input,
@@ -98,6 +115,7 @@ aside.fixed.left-20 .border-b {
   border-color: rgba(76, 215, 246, 0.2) !important;
   color: #e8edf0 !important;
 }
+
 .modal input:focus,
 .modal select:focus,
 .modal textarea:focus {
@@ -142,4 +160,21 @@ aside.fixed.left-20 .border-b {
 /* ── 20. Stat chips trong header ── */
 .bg-surface-container\/40 {
   background: rgba(30, 47, 52, 0.7) !important;
+}
+
+.cfg-nav-item {
+  color: var(--text-variant, #a8b8bd);
+  border-left: 2px solid transparent;
+  transition: all .15s;
+}
+
+.cfg-nav-item:hover {
+  background: rgba(76, 215, 246, 0.06);
+  color: #e8edf0;
+}
+
+.cfg-nav-item.active {
+  color: #4cd7f6;
+  background: rgba(76, 215, 246, 0.1);
+  border-left-color: #4cd7f6;
 }
