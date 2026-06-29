@@ -68,6 +68,55 @@ async def fetch_active_cameras() -> List[dict]:
         return []
 
 
+async def claim_next_scan_job(worker_id: str) -> Optional[dict]:
+    """POST /api/scan-jobs/claim — claim job queued sớm nhất cho worker."""
+    try:
+        r = await _post_with_retry(
+            "/api/scan-jobs/claim",
+            {"workerId": worker_id},
+            {"x-api-key": AI_WEBHOOK_SECRET},
+        )
+        if r is None or r.status_code >= 400:
+            logger.error(f"claim_next_scan_job failed: HTTP {r.status_code if r else 'no response'}")
+            return None
+        data = r.json().get("data")
+        return data if isinstance(data, dict) else None
+    except Exception as e:
+        logger.error(f"claim_next_scan_job error: {e}")
+        return None
+
+
+async def update_scan_job_progress(scan_job_id: str, payload: dict) -> bool:
+    """POST /api/scan-jobs/:id/progress — update status/progress/timeline."""
+    try:
+        r = await _post_with_retry(
+            f"/api/scan-jobs/{scan_job_id}/progress",
+            payload,
+            {"x-api-key": AI_WEBHOOK_SECRET},
+        )
+        return bool(r is not None and r.status_code < 400)
+    except Exception as e:
+        logger.error(f"update_scan_job_progress error: {e}")
+        return False
+
+
+async def create_scan_job_event(scan_job_id: str, payload: dict) -> Optional[dict]:
+    """POST /api/scan-jobs/:id/events — persist event and optionally alert."""
+    try:
+        r = await _post_with_retry(
+            f"/api/scan-jobs/{scan_job_id}/events",
+            payload,
+            {"x-api-key": AI_WEBHOOK_SECRET},
+        )
+        if r is None or r.status_code >= 400:
+            logger.error(f"create_scan_job_event failed: HTTP {r.status_code if r else 'no response'}")
+            return None
+        return r.json().get("data")
+    except Exception as e:
+        logger.error(f"create_scan_job_event error: {e}")
+        return None
+
+
 async def post_alert(camera: dict, detection: dict) -> Optional[dict]:
     """
     POST /api/alerts với header x-api-key.
