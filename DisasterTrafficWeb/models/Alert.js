@@ -106,6 +106,64 @@ const alertSchema = new mongoose.Schema(
             type: Date,
             default: null
         },
+        cameraId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Camera',
+            default: null,
+            index: true,
+        },
+        scanJobId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'ScanJob',
+            default: null,
+            index: true,
+        },
+        cameraEventId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'CameraEvent',
+            default: null,
+            index: true,
+        },
+        verifiedBy: {
+            type: String,
+            trim: true,
+            maxlength: 100,
+            default: '',
+        },
+        snapshotUrl: {
+            type: String,
+            trim: true,
+            maxlength: 2000,
+            default: '',
+        },
+        clipBeforeUrl: {
+            type: String,
+            trim: true,
+            maxlength: 2000,
+            default: '',
+        },
+        clipDuringUrl: {
+            type: String,
+            trim: true,
+            maxlength: 2000,
+            default: '',
+        },
+        clipAfterUrl: {
+            type: String,
+            trim: true,
+            maxlength: 2000,
+            default: '',
+        },
+        eventStartSec: {
+            type: Number,
+            default: null,
+            min: 0,
+        },
+        eventEndSec: {
+            type: Number,
+            default: null,
+            min: 0,
+        },
         expiresAt: {
             type: Date,
             default: null,

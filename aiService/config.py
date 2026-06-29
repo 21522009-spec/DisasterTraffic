@@ -44,10 +44,16 @@ def _list(key: str, default: List[str], sep: str = "|") -> List[str]:
 # ===== Backend =====
 BACKEND_URL: str = os.getenv("BACKEND_URL", "http://localhost:3000").rstrip("/")
 AI_WEBHOOK_SECRET: str = os.getenv("AI_WEBHOOK_SECRET", "")
+PROJECT_ROOT: Path = Path(__file__).resolve().parent.parent
 
 # ===== Scheduling (camera workers) =====
 DETECT_INTERVAL_SECONDS: int = _i("DETECT_INTERVAL_SECONDS", 20)
 CAMERA_REFRESH_SECONDS: int = _i("CAMERA_REFRESH_SECONDS", 60)
+ENABLE_VOD_SCAN_WORKER: bool = _b("ENABLE_VOD_SCAN_WORKER", True)
+VOD_SCAN_POLL_SECONDS: int = _i("VOD_SCAN_POLL_SECONDS", 8)
+VOD_PROGRESS_PUSH_SECONDS: int = _i("VOD_PROGRESS_PUSH_SECONDS", 10)
+VOD_DEFAULT_FPS: float = _f("VOD_DEFAULT_FPS", 25.0)
+VOD_OUTPUT_CODEC: str = os.getenv("VOD_OUTPUT_CODEC", "mp4v")
 
 # ===== Detector (camera workers) =====
 DETECTOR: str = os.getenv("DETECTOR", "yolo").lower()
@@ -60,6 +66,13 @@ FIRE_MODEL_PATH: str = os.getenv("FIRE_MODEL_PATH", "")
 VIDEOS_DIR: Path = Path(os.getenv("VIDEOS_DIR", str(Path(__file__).parent / "videos")))
 DEFAULT_VIDEO: str = os.getenv("DEFAULT_VIDEO", "default.mp4")
 MOCK_DETECTION_PROBABILITY: float = _f("MOCK_DETECTION_PROBABILITY", 0.3)
+MEDIA_OUTPUT_DIR: Path = Path(
+    os.getenv(
+        "MEDIA_OUTPUT_DIR",
+        str(PROJECT_ROOT / "DisasterTrafficWeb" / "public" / "media"),
+    )
+)
+MEDIA_PUBLIC_BASE_URL: str = os.getenv("MEDIA_PUBLIC_BASE_URL", "/media").rstrip("/")
 
 # ===== YouTube Hunter =====
 ENABLE_YOUTUBE_HUNTER: bool = _b("ENABLE_YOUTUBE_HUNTER", False)

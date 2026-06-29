@@ -4,10 +4,11 @@ Chạy: python main.py
 
 Quản lý 3 nhóm worker chạy song song:
   - Camera workers: 1 worker mỗi camera đã đăng ký trong DB
+  - VOD queue worker: poll ScanJob queue để quét video full timeline
   - YouTube hunter: quét YouTube tìm video thiên tai
   - RSS hunter:     quét RSS báo VN tìm tin thiên tai
 
-Bật/tắt từng nhóm qua .env (DETECTOR, ENABLE_YOUTUBE_HUNTER, ENABLE_RSS_HUNTER).
+Bật/tắt từng nhóm qua .env (DETECTOR, ENABLE_VOD_SCAN_WORKER, ENABLE_YOUTUBE_HUNTER, ENABLE_RSS_HUNTER).
 """
 import asyncio
 import signal
@@ -21,11 +22,13 @@ from config import (
     AI_WEBHOOK_SECRET,
     CAMERA_REFRESH_SECONDS,
     LOG_LEVEL,
+    ENABLE_VOD_SCAN_WORKER,
     ENABLE_YOUTUBE_HUNTER,
     ENABLE_RSS_HUNTER,
 )
 from backend_client import fetch_active_cameras, close_client
 from workers.camera_worker import run_worker
+from workers.vod_scan_worker import run_vod_scan_queue
 from workers.youtube_hunter import run_youtube_hunter
 from workers.rss_hunter import run_rss_hunter
 
@@ -45,6 +48,9 @@ class WorkerSupervisor:
     def __init__(self) -> None:
         self.camera_tasks: Dict[str, asyncio.Task] = {}
         self.camera_stops: Dict[str, asyncio.Event] = {}
+
+        self.vod_task: asyncio.Task | None = None
+        self.vod_stop = asyncio.Event()
 
         self.hunter_task: asyncio.Task | None = None
         self.hunter_stop = asyncio.Event()
@@ -78,8 +84,17 @@ class WorkerSupervisor:
 
         logger.info(
             f"[supervisor] camera workers: {len(self.camera_tasks)} | "
+            f"vod: {'on' if self.vod_task and not self.vod_task.done() else 'off'} | "
             f"hunter: {'on' if self.hunter_task and not self.hunter_task.done() else 'off'}"
         )
+
+    async def start_vod(self) -> None:
+        if not ENABLE_VOD_SCAN_WORKER:
+            logger.info("[supervisor] VOD queue worker tắt (ENABLE_VOD_SCAN_WORKER=false).")
+            return
+        if self.vod_task and not self.vod_task.done():
+            return
+        self.vod_task = asyncio.create_task(run_vod_scan_queue(self.vod_stop))
 
     async def start_hunter(self) -> None:
         if not ENABLE_YOUTUBE_HUNTER:
@@ -106,7 +121,8 @@ class WorkerSupervisor:
                 "Chạy: cd ../DisasterTrafficWeb && npm run seed:cameras"
             )
 
-        # Spawn YouTube hunter và RSS hunter (nếu được bật trong .env)
+        # Spawn VOD queue worker, YouTube hunter và RSS hunter (nếu được bật trong .env)
+        await self.start_vod()
         await self.start_hunter()
         await self.start_rss()
 
@@ -127,12 +143,16 @@ class WorkerSupervisor:
         # Camera workers
         for stop in self.camera_stops.values():
             stop.set()
+        # VOD queue worker
+        self.vod_stop.set()
         # YouTube hunter
         self.hunter_stop.set()
         # RSS hunter
         self.rss_stop.set()
 
         all_tasks = list(self.camera_tasks.values())
+        if self.vod_task:
+            all_tasks.append(self.vod_task)
         if self.hunter_task:
             all_tasks.append(self.hunter_task)
         if self.rss_task:
@@ -150,6 +170,7 @@ async def main_async() -> None:
         return
 
     logger.info(f"Backend: {BACKEND_URL}")
+    logger.info(f"VOD Queue:      {'ON' if ENABLE_VOD_SCAN_WORKER else 'off'}")
     logger.info(f"YouTube Hunter: {'ON' if ENABLE_YOUTUBE_HUNTER else 'off'}")
     logger.info(f"RSS Hunter:     {'ON' if ENABLE_RSS_HUNTER else 'off'}")
 
@@ -162,6 +183,7 @@ async def main_async() -> None:
         sup.shutting_down = True
         for stop in sup.camera_stops.values():
             stop.set()
+        sup.vod_stop.set()
         sup.hunter_stop.set()
         sup.rss_stop.set()
 

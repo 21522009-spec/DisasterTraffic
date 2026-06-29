@@ -12,6 +12,7 @@ import { Server as SocketIOServer } from 'socket.io';
 import disasterRoutes from './routes/disasterRoutes.js';
 import alertRoutes from './routes/alertRoutes.js';
 import cameraRoutes from './routes/cameraRoutes.js';
+import scanJobRoutes from './routes/scanJobRoutes.js';
 import deviceRoutes from './routes/deviceRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import routingRoutes from './routes/routingRoutes.js';
@@ -135,6 +136,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/disasters', disasterRoutes);
 app.use('/api/alerts', alertRoutes(io));
 app.use('/api/cameras', cameraRoutes(io));
+app.use('/api/scan-jobs', scanJobRoutes(io));
 app.use('/api/devices', deviceRoutes);
 app.use('/api/routing', routingRoutes);
 
