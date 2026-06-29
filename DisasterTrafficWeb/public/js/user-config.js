@@ -105,6 +105,11 @@ function setFieldsDisabled(paneId, disabled) {
     if (!pane) return;
 
     pane.querySelectorAll('input, select, textarea').forEach(el => {
+
+        if (el.id === 'cfg-pw-cur') {
+            el.readOnly = true;
+            return;
+        }
         // Giữ email luôn disabled
         if (el.type === 'email' && el.disabled && disabled === false) return;
         el.disabled = disabled;
@@ -419,20 +424,33 @@ function renderSecurityPane() {
         <div class="space-y-3 mb-5">
             <div>
                 <label class="block text-xs text-gray-500 mb-1">Mật khẩu hiện tại</label>
-                <input id="cfg-pw-cur" type="password" placeholder="••••••••" disabled
-                    class="w-full px-3 py-2 text-sm border rounded-lg bg-transparent border-outline-variant/40 focus:border-primary outline-none disabled:opacity-50 disabled:cursor-not-allowed">
+                <input id="cfg-pw-cur" type="password" placeholder="••••••••" readonly
+                    class="w-full px-3 py-2 text-sm border rounded-lg bg-transparent border-outline-variant/40 opacity-70 cursor-not-allowed">
             </div>
             <div class="grid grid-cols-2 gap-3">
-                <div>
-                    <label class="block text-xs text-gray-500 mb-1">Mật khẩu mới</label>
-                    <input id="cfg-pw-new" type="password" placeholder="≥ 8 ký tự, có số + chữ" disabled
-                        class="w-full px-3 py-2 text-sm border rounded-lg bg-transparent border-outline-variant/40 focus:border-primary outline-none disabled:opacity-50 disabled:cursor-not-allowed">
-                </div>
-                <div>
-                    <label class="block text-xs text-gray-500 mb-1">Xác nhận mật khẩu mới</label>
-                    <input id="cfg-pw-confirm" type="password" placeholder="Nhập lại" disabled
-                        class="w-full px-3 py-2 text-sm border rounded-lg bg-transparent border-outline-variant/40 focus:border-primary outline-none disabled:opacity-50 disabled:cursor-not-allowed">
-                </div>
+                <div class="relative">
+					<input id="cfg-pw-new" type="password"
+						placeholder="≥ 8 ký tự, có số + chữ" disabled
+						class="w-full px-3 py-2 pr-10 text-sm border rounded-lg bg-transparent border-outline-variant/40 focus:border-primary outline-none disabled:opacity-50 disabled:cursor-not-allowed">
+
+					<button type="button"
+						id="toggle-pw-new"
+						class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+						<span class="material-symbols-outlined">visibility</span>
+					</button>
+				</div>
+            
+                <div class="relative">
+					<input id="cfg-pw-confirm" type="password"
+						placeholder="Nhập lại" disabled
+						class="w-full px-3 py-2 pr-10 text-sm border rounded-lg bg-transparent border-outline-variant/40 focus:border-primary outline-none disabled:opacity-50 disabled:cursor-not-allowed">
+
+					<button type="button"
+						id="toggle-pw-confirm"
+						class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+						<span class="material-symbols-outlined">visibility</span>
+					</button>
+				</div>
             </div>
         </div>
 
@@ -455,6 +473,25 @@ function renderSecurityPane() {
         </div>
     `;
     pane.append(body);
+
+	function bindPasswordToggle(inputId, btnId) {
+		const input = document.getElementById(inputId);
+		const btn = document.getElementById(btnId);
+
+		if (!input || !btn) return;
+
+		btn.addEventListener('click', () => {
+			const visible = input.type === 'text';
+
+			input.type = visible ? 'password' : 'text';
+
+			btn.querySelector('.material-symbols-outlined').textContent =
+				visible ? 'visibility' : 'visibility_off';
+		});
+	}
+
+	bindPasswordToggle('cfg-pw-new', 'toggle-pw-new');
+	bindPasswordToggle('cfg-pw-confirm', 'toggle-pw-confirm');
 }
 
 async function changePassword() {
@@ -572,7 +609,7 @@ function renderMapPane(cfg) {
             document.querySelectorAll('#cfg-pane-map [data-color]').forEach(btn => {
                 btn.style.pointerEvents = '';
                 btn.style.opacity = '';
-                btn.onclick = function() { window._setCfgColor(this); };
+                btn.onclick = function () { window._setCfgColor(this); };
             });
         },
     });
