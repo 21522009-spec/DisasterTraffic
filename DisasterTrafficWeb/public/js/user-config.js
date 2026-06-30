@@ -105,11 +105,6 @@ function setFieldsDisabled(paneId, disabled) {
     if (!pane) return;
 
     pane.querySelectorAll('input, select, textarea').forEach(el => {
-
-        if (el.id === 'cfg-pw-cur') {
-            el.readOnly = true;
-            return;
-        }
         // Giữ email luôn disabled
         if (el.type === 'email' && el.disabled && disabled === false) return;
         el.disabled = disabled;
@@ -422,6 +417,18 @@ function renderSecurityPane() {
     const body = document.createElement('div');
     body.innerHTML = `
         <div class="space-y-3 mb-5">
+            <div class="relative">
+                <label class="block text-xs text-gray-500 mb-1">Mật khẩu hiện tại</label>
+                <input id="cfg-pw-cur" type="password"
+                    placeholder="Nhập mật khẩu hiện tại" disabled
+                    class="w-full px-3 py-2 pr-10 text-sm border rounded-lg bg-transparent border-outline-variant/40 focus:border-primary outline-none disabled:opacity-50 disabled:cursor-not-allowed">
+                <button type="button"
+                    id="toggle-pw-cur"
+                    class="absolute right-3 top-7 text-gray-400">
+                    <span class="material-symbols-outlined">visibility</span>
+                </button>
+            </div>
+
             <div class="grid grid-cols-2 gap-3">
                 <div class="relative">
 					<input id="cfg-pw-new" type="password"
@@ -485,23 +492,35 @@ function renderSecurityPane() {
 		});
 	}
 
+    bindPasswordToggle('cfg-pw-cur', 'toggle-pw-cur');
 	bindPasswordToggle('cfg-pw-new', 'toggle-pw-new');
 	bindPasswordToggle('cfg-pw-confirm', 'toggle-pw-confirm');
+
+    document.getElementById('btn-logout-others')?.addEventListener('click', () => {
+        toast('Tính năng quản lý phiên đăng nhập đang được phát triển.', false);
+    });
 }
 
 async function changePassword() {
+    const cur = document.getElementById('cfg-pw-cur')?.value;
     const nw = document.getElementById('cfg-pw-new')?.value;
     const confirm = document.getElementById('cfg-pw-confirm')?.value;
 
+    if (!cur) { toast('Vui lòng nhập mật khẩu hiện tại.', false); return; }
     if (!nw) { toast('Vui lòng nhập mật khẩu mới.', false); return; }
     if (nw !== confirm) { toast('Mật khẩu mới không khớp.', false); return; }
     if (nw.length < 8 || !/[A-Za-z]/.test(nw) || !/\d/.test(nw)) {
         toast('Mật khẩu mới cần ≥ 8 ký tự, có chữ và số.', false); return;
     }
+    if (cur === nw) {
+        toast('Mật khẩu mới phải khác mật khẩu hiện tại.', false); return;
+    }
 
     try {
-        // TODO: endpoint PATCH /api/auth/password chưa có — cần thêm vào authRoutes.js
-        // await apiFetch('/api/auth/password', { method: 'PATCH', body: JSON.stringify({ currentPassword: cur, newPassword: nw }) });
+        await apiFetch('/api/auth/password', {
+            method: 'PATCH',
+            body: JSON.stringify({ currentPassword: cur, newPassword: nw }),
+        });
         toast('Đã đổi mật khẩu thành công.');
         ['cfg-pw-cur', 'cfg-pw-new', 'cfg-pw-confirm'].forEach(id => {
             const el = document.getElementById(id);
