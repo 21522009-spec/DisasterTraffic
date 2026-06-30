@@ -130,6 +130,39 @@ router.get('/me', requireJWT, async (req, res) => {
 });
 
 // POST /api/auth/upgrade — chưa tích hợp thanh toán
+router.patch('/password', authLimiter, requireJWT, async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body || {};
+
+        if (typeof currentPassword !== 'string' || !currentPassword) {
+            return res.status(400).json({ error: 'Thiếu mật khẩu hiện tại' });
+        }
+        const pwErr = validatePassword(newPassword);
+        if (pwErr) return res.status(400).json({ error: pwErr });
+
+        const user = await User.findById(req.user._id);
+        if (!user) return res.status(404).json({ error: 'Không tìm thấy tài khoản' });
+
+        const ok = await user.comparePassword(currentPassword);
+        if (!ok) {
+            return res.status(401).json({ error: 'Mật khẩu hiện tại không đúng' });
+        }
+
+        if (currentPassword === newPassword) {
+            return res.status(400).json({ error: 'Mật khẩu mới phải khác mật khẩu hiện tại' });
+        }
+
+        user.password = newPassword; // pre('save') hook sẽ tự hash
+        await user.save();
+
+        // Cấp lại token mới để UX mượt — không cần đăng nhập lại
+        res.json({ message: 'Đã đổi mật khẩu thành công', token: signToken(user), user: safeUser(user) });
+    } catch (err) {
+        console.error('[auth] change password failed:', err.name);
+        res.status(500).json({ error: 'Lỗi máy chủ' });
+    }
+});
+
 router.post('/upgrade', requireJWT, (req, res) => {
     res.status(501).json({
         error: 'Nâng cấp gói chưa được hỗ trợ. Vui lòng liên hệ quản trị viên.',
