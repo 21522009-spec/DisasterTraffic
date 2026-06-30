@@ -422,11 +422,6 @@ function renderSecurityPane() {
     const body = document.createElement('div');
     body.innerHTML = `
         <div class="space-y-3 mb-5">
-            <div>
-                <label class="block text-xs text-gray-500 mb-1">Mật khẩu hiện tại</label>
-                <input id="cfg-pw-cur" type="password" placeholder="••••••••" readonly
-                    class="w-full px-3 py-2 text-sm border rounded-lg bg-transparent border-outline-variant/40 opacity-70 cursor-not-allowed">
-            </div>
             <div class="grid grid-cols-2 gap-3">
                 <div class="relative">
 					<input id="cfg-pw-new" type="password"
@@ -495,11 +490,10 @@ function renderSecurityPane() {
 }
 
 async function changePassword() {
-    const cur = document.getElementById('cfg-pw-cur')?.value;
     const nw = document.getElementById('cfg-pw-new')?.value;
     const confirm = document.getElementById('cfg-pw-confirm')?.value;
 
-    if (!cur || !nw) { toast('Vui lòng điền đầy đủ mật khẩu.', false); return; }
+    if (!nw) { toast('Vui lòng nhập mật khẩu mới.', false); return; }
     if (nw !== confirm) { toast('Mật khẩu mới không khớp.', false); return; }
     if (nw.length < 8 || !/[A-Za-z]/.test(nw) || !/\d/.test(nw)) {
         toast('Mật khẩu mới cần ≥ 8 ký tự, có chữ và số.', false); return;
